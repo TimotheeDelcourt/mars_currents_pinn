@@ -19,6 +19,7 @@ if __name__=='__main__':
     points = torch.load('data/position_pc.pt').numpy()
     alt, lat, lon = points[:,0], points[:,1], points[:,2]
     r = alt + 3393.5
+    r*= 1e3 # in meters
 
     num_cpus = cpu_count() - 1
     points = np.stack((r, lat, lon), axis=1)

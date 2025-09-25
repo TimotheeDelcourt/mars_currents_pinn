@@ -22,7 +22,7 @@ def format_sample(dat_file = '../../Data/MAVEN_MAG/MSO_AM_BL/2014283pc.dat'):
                         'SS Bz model','BL SS Bx','BL SS By','BL SS Bz','BL PC Bx',
                         'BL PC By','BL PC Bz','orbit number']
     sample.insert( 0 , 'time', pd.to_datetime(sample[['year', 'doy', 'hr', 'min', 'sec']].astype(int).astype(str).agg('-'.join, axis=1), format='%Y-%j-%H-%M-%S')    )
-    sample = sample.drop(columns=['year','doy','hr','min','sec','decimal doy','msec','dec doy from SS file','BL PC Bx', 'BL PC By', 'BL PC Bz','PC x', 'PC y', 'PC z','SS Bx model','SS By model','SS Bz model','BL PC Bx',
+    sample = sample.drop(columns=['year','doy','hr','min','sec','decimal doy','msec','dec doy from SS file','BL PC Bx', 'BL PC By', 'BL PC Bz','SS Bx model','SS By model','SS Bz model','BL PC Bx',
                         'BL PC By','BL PC Bz'])
     sample['orbit number'] = sample['orbit number'].astype(int)
     return sample
@@ -34,11 +34,9 @@ def merge_all_dat_to_parquet():
     for i, f in enumerate(all_mso_files):
         df = format_sample(f)
         if i == 0:
-            # df.to_parquet('data/MAVEN_MSO_data.parquet', engine = 'fastparquet', compression='zstd')
-            a = 0
+            df.to_parquet('data/MAVEN_MSO_data.parquet', engine = 'fastparquet', compression='zstd')
         else:
-            # df.to_parquet('data/MAVEN_MSO_data.parquet', engine = 'fastparquet', compression='zstd', append=True)
-            a = 0
+            df.to_parquet('data/MAVEN_MSO_data.parquet', engine = 'fastparquet', compression='zstd', append=True)
 
 def prepare_tensors():
     position_pc = torch.tensor(pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['alt','lat','lon']).values, dtype=torch.float32) # alt, lat, lon
@@ -76,7 +74,7 @@ def parallel_rotate(n_processes=None, chunk_size=500000):
 if __name__ == "__main__":
 
     # dashboard
-    perform_merge_all_dat_to_parquet = 0
+    perform_merge_all_dat_to_parquet = 1
     test_format = 0
     test_rotation = 0
     perform_parallel_rot = 0
@@ -100,5 +98,5 @@ if __name__ == "__main__":
     if perform_parallel_rot:
         parallel_rotate()
 
-    prepare_tensors()
+    # prepare_tensors()
    
