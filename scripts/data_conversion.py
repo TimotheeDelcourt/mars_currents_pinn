@@ -22,17 +22,32 @@ def format_sample(dat_file = '../../Data/MAVEN_MAG/MSO_AM_BL/2014283pc.dat'):
                         'SS Bz model','BL SS Bx','BL SS By','BL SS Bz','BL PC Bx',
                         'BL PC By','BL PC Bz','orbit number']
     sample.insert( 0 , 'time', pd.to_datetime(sample[['year', 'doy', 'hr', 'min', 'sec']].astype(int).astype(str).agg('-'.join, axis=1), format='%Y-%j-%H-%M-%S')    )
-    sample = sample.drop(columns=['year','doy','hr','min','sec','decimal doy','msec','dec doy from SS file','BL PC Bx', 'BL PC By', 'BL PC Bz','PC x', 'PC y', 'PC z','SS Bx model','SS By model','SS Bz model'])
+    sample = sample.drop(columns=['year','doy','hr','min','sec','decimal doy','msec','dec doy from SS file','BL PC Bx', 'BL PC By', 'BL PC Bz','PC x', 'PC y', 'PC z','SS Bx model','SS By model','SS Bz model','BL PC Bx',
+                        'BL PC By','BL PC Bz'])
     sample['orbit number'] = sample['orbit number'].astype(int)
     return sample
 
+def merge_all_dat_to_parquet():
+    path = '../../Data/MAVEN_MAG/MSO_AM_BL/'
+    all_mso_files = glob.glob(path+'*.dat')
+    all_mso_files = tqdm(all_mso_files)
+    for i, f in enumerate(all_mso_files):
+        df = format_sample(f)
+        if i == 0:
+            # df.to_parquet('data/MAVEN_MSO_data.parquet', engine = 'fastparquet', compression='zstd')
+            a = 0
+        else:
+            # df.to_parquet('data/MAVEN_MSO_data.parquet', engine = 'fastparquet', compression='zstd', append=True)
+            a = 0
+
 def prepare_tensors():
-    position = torch.tensor(pd.read_parquet('data/MAVEN_MSO_data_and_model.parquet', columns=['SS x','SS y','SS z']).values, dtype=torch.float32)
-    torch.save(position, 'data/position.pt')
-    del position
-    a = pd.read_parquet('data/MAVEN_MSO_data_and_model.parquet', columns=['SS Bx','SS By','SS Bz']).values
-    b = pd.read_parquet('data/MAVEN_MSO_data_and_model.parquet', columns=['BL SS Bx','BL SS By','BL SS Bz']).values
-    # target = torch.tensor(, dtype=torch.float32)
+    position_pc = torch.tensor(pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['alt','lat','lon']).values, dtype=torch.float32) # alt, lat, lon
+    position_pc_10000_random_picks = position_pc[torch.randperm(position_pc.size(0))[:10000]]
+    print(min(position_pc_10000_random_picks[:, 0]), max(position_pc_10000_random_picks[:, 0]))
+    print(min(position_pc_10000_random_picks[:, 1]), max(position_pc_10000_random_picks[:, 1]))
+    print(min(position_pc_10000_random_picks[:, 2]), max(position_pc_10000_random_picks[:, 2]))
+
+   
 
 def rotate_MBF_to_MSO(df_chunk = format_sample()):
     time_et = spice.datetime2et(df_chunk.time)
@@ -42,8 +57,7 @@ def rotate_MBF_to_MSO(df_chunk = format_sample()):
     return B_mso
 
 def parallel_rotate(n_processes=None, chunk_size=500000):
-    df = pd.read_parquet('data/MAVEN_MSO_data_and_model.parquet', columns=['time','PC Bx data','PC By data','PC Bz data'])
-    df = df[:2000000] # test
+    df = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['time','PC_Bx_crust','PC_By_crust','PC_Bz_crust']) # first add PC_crust columns
     # print(df.memory_usage(index=True).sum()) : 7 Gb
     if n_processes is None:
         n_processes = 7
@@ -51,6 +65,9 @@ def parallel_rotate(n_processes=None, chunk_size=500000):
     with Pool(n_processes) as pool:
         results = pool.map(rotate_MBF_to_MSO, chunks)
     B_mso = np.concatenate(results)
+
+   
+
     
 
     
@@ -60,9 +77,9 @@ if __name__ == "__main__":
 
     # dashboard
     perform_merge_all_dat_to_parquet = 0
-    test_format = 1
+    test_format = 0
     test_rotation = 0
-    peform_parallel_rot = 0
+    perform_parallel_rot = 0
 
 
     # execution
@@ -71,15 +88,7 @@ if __name__ == "__main__":
         print(df.columns)
 
     if perform_merge_all_dat_to_parquet:
-        path = '../../Data/MAVEN_MAG/MSO_AM_BL/'
-        all_mso_files = glob.glob(path+'*.dat')
-        all_mso_files = tqdm(all_mso_files)
-        for i, f in enumerate(all_mso_files):
-            df = format_sample(f)
-            if i == 0:
-                df.to_parquet('data/MAVEN_MSO_data_and_model.parquet', engine = 'fastparquet', compression='zstd')
-            else:
-                df.to_parquet('data/MAVEN_MSO_data_and_model.parquet', engine = 'fastparquet', compression='zstd', append=True)
+        merge_all_dat_to_parquet()
 
     if test_rotation:
         time_start = time.time()
@@ -88,8 +97,8 @@ if __name__ == "__main__":
         print(f'elapsed time : {time_stop-time_start} seconds')
         print(f'Estimated time for 3500 files : {(time_stop-time_start)*3500/3600} hours')
 
-    if peform_parallel_rot:
+    if perform_parallel_rot:
         parallel_rotate()
 
-
+    prepare_tensors()
    
