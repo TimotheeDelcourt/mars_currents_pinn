@@ -1,0 +1,18 @@
+\begindata
+
+
+
+
+KERNELS_TO_LOAD = (
+			'scripts/kernels/maven_struct_v12.bsp'
+			'scripts/kernels/maven_v12.tf'
+			'scripts/kernels/naif0012.tls'
+			'scripts/kernels/pck00009.tpc'
+			'scripts/kernels/de430s.bsp'
+			'scripts/kernels/mar097s.bsp'
+			'scripts/kernels/MVN_SCLKSCET.00132.tsc'
+			)
+
+\begintext
+
+
