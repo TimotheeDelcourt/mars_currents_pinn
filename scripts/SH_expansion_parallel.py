@@ -8,8 +8,8 @@ coeffs = sh.SHMagCoeffs.from_file('crustal_field_model/PINN2025.sh', normalizati
 
 # Expansion ---
 def expand_chunk(points):
-    alt, lat, lon = points[:,0], points[:,1], points[:,2]
-    expanded_chunk = coeffs.expand(alt = alt, lat = lat, lon = lon, degrees=True)
+    r, lat, lon = points[:,0], points[:,1], points[:,2]
+    expanded_chunk = coeffs.expand(r = r, lat = lat, lon = lon, degrees=True)
     return expanded_chunk
 
 
