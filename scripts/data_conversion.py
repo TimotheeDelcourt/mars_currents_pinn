@@ -9,8 +9,9 @@ from spiceypy import *
 import spiceypy as spice
 import time
 from multiprocessing import Pool, cpu_count
+from . import utils
 
-furnsh("scripts/kernels.txt")
+
 
 def format_sample(dat_file = '../../Data/MAVEN_MAG/MSO_AM_BL/2014283pc.dat'):
     sample = pd.read_csv(dat_file, delim_whitespace=True, header=None)
@@ -22,8 +23,8 @@ def format_sample(dat_file = '../../Data/MAVEN_MAG/MSO_AM_BL/2014283pc.dat'):
                         'SS Bz model','BL SS Bx','BL SS By','BL SS Bz','BL PC Bx',
                         'BL PC By','BL PC Bz','orbit number']
     sample.insert( 0 , 'time', pd.to_datetime(sample[['year', 'doy', 'hr', 'min', 'sec']].astype(int).astype(str).agg('-'.join, axis=1), format='%Y-%j-%H-%M-%S')    )
-    sample = sample.drop(columns=['year','doy','hr','min','sec','decimal doy','msec','dec doy from SS file','BL PC Bx', 'BL PC By', 'BL PC Bz','SS Bx model','SS By model','SS Bz model','BL PC Bx',
-                        'BL PC By','BL PC Bz'])
+    sample = sample.drop(columns=['year','doy','hr','min','sec','decimal doy','msec','dec doy from SS file','SS Bx model','SS By model','SS Bz model',
+                                  ])#'BL PC Bx','BL PC By','BL PC Bz'])
     sample['orbit number'] = sample['orbit number'].astype(int)
     return sample
 
@@ -38,33 +39,41 @@ def merge_all_dat_to_parquet():
         else:
             df.to_parquet('data/MAVEN_MSO_data.parquet', engine = 'fastparquet', compression='zstd', append=True)
 
-def prepare_tensors():
-    position_pc = torch.tensor(pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['alt','lat','lon']).values, dtype=torch.float32) # alt, lat, lon
-    position_pc_10000_random_picks = position_pc[torch.randperm(position_pc.size(0))[:10000]]
-    print(min(position_pc_10000_random_picks[:, 0]), max(position_pc_10000_random_picks[:, 0]))
-    print(min(position_pc_10000_random_picks[:, 1]), max(position_pc_10000_random_picks[:, 1]))
-    print(min(position_pc_10000_random_picks[:, 2]), max(position_pc_10000_random_picks[:, 2]))
-
-   
+  
 
 def rotate_MBF_to_MSO(df_chunk = format_sample()):
+    furnsh("scripts/kernels.txt")
     time_et = spice.datetime2et(df_chunk.time)
     rotation_matrices = np.stack([spice.pxform('IAU_MARS','MAVEN_MSO',t) for t in time_et]) # shape: (N, 3, 3)
-    B_mbf = df_chunk[['PC Bx data','PC By data','PC Bz data']].values
+    # MEMORY OVERLOADED! rotation_matrices = spice.cyice.cyice.pxform_v('IAU_MARS', 'MAVEN_MSO', time_et)  # shape: (N,3,3)
+    B_mbf = df_chunk[['Br','Bt','Bp']].values
     B_mso = np.einsum('nij,nj->ni', rotation_matrices, B_mbf)
     return B_mso
 
-def parallel_rotate(n_processes=None, chunk_size=500000):
-    df = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['time','PC_Bx_crust','PC_By_crust','PC_Bz_crust']) # first add PC_crust columns
-    # print(df.memory_usage(index=True).sum()) : 7 Gb
+def parallel_rotate(n_processes=None, chunk_size=1000000):
+    df = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['time']) # first add PC_crust columns
+    crustal_field_pc = torch.load('data/crustal_field_pc_xyz.pt')
+    assert len(crustal_field_pc) == len(df), "crustal_field_pc.pt has a different length than the dataframe"
+    df['Br'] = crustal_field_pc[:,0].numpy()
+    df['Bt'] = crustal_field_pc[:,1].numpy()
+    df['Bp'] = crustal_field_pc[:,2].numpy()
+    # print(df.memory_usage(index=True).sum()) # 6 Gb
+
     if n_processes is None:
         n_processes = 7
     chunks = [df.iloc[i:i+chunk_size] for i in range(0, len(df), chunk_size)]
     with Pool(n_processes) as pool:
         results = pool.map(rotate_MBF_to_MSO, chunks)
     B_mso = np.concatenate(results)
+    B_mso = torch.tensor(B_mso, dtype=torch.float32)
+    torch.save(B_mso,'data/crustal_field_mso.pt')
 
-   
+def pc_sph2cart(position_pc=torch.load('data/position_pc.pt'), field_pc=torch.load('data/crustal_field_pc.pt')):
+    position_pc[:,1] = 90-position_pc[:,1] # colat to lat
+    position_pc[:,1] = torch.deg2rad(position_pc[:,1])
+    position_pc[:,2] = torch.deg2rad(position_pc[:,2])
+    field_pc_xyz = utils.field_spher_to_cart(position_pc,field_pc)
+    torch.save(field_pc_xyz, 'data/crustal_field_pc_xyz.pt')
 
     
 
@@ -74,7 +83,7 @@ def parallel_rotate(n_processes=None, chunk_size=500000):
 if __name__ == "__main__":
 
     # dashboard
-    perform_merge_all_dat_to_parquet = 1
+    perform_merge_all_dat_to_parquet = 0
     test_format = 0
     test_rotation = 0
     perform_parallel_rot = 0
@@ -83,7 +92,8 @@ if __name__ == "__main__":
     # execution
     if test_format:
         df = format_sample()
-        print(df.columns)
+        print(df.head())
+
 
     if perform_merge_all_dat_to_parquet:
         merge_all_dat_to_parquet()
@@ -98,5 +108,4 @@ if __name__ == "__main__":
     if perform_parallel_rot:
         parallel_rotate()
 
-    # prepare_tensors()
    
