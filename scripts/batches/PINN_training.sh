@@ -9,8 +9,6 @@
 #SBATCH --mem-per-cpu=10G
 #SBATCH --tmp=500G                        # per node!!
 #SBATCH --job-name=PINN_training
-#SBATCH --output=PINN_training.out
-#SBATCH --error=PINN_training.err
 #SBATCH --mail-type=END
 
 source ../../../my_venv/bin/activate
