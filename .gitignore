@@ -1,4 +1,3 @@
 # Ignore the data folder
 data/*
 scripts/batches/*.out
-scripts/playground.ipynb
