@@ -22,7 +22,7 @@ class NeuralNet(nn.Module):
         for i in np.arange(1,num_hidden_layers):
             self.hidden_layers.append(nn.Linear(self.num_neurons[i-1], self.num_neurons[i]))
             self.hidden_layers.append(self.activation)
-        self.output_layer = nn.Linear(self.num_neurons[-1], 1)
+        self.output_layer = nn.Linear(self.num_neurons[-1], 3)
         self.network = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
 
     def forward(self, x):
