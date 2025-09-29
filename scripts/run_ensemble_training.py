@@ -40,6 +40,7 @@ def run_ensemble_training():
 
 
         # Load and sample datasets ----------------------------------
+        print('Loading data')
         input = torch.load('data/position_mso.pt')
         alt = torch.load('data/position_pc.pt')[:,0]
         alt = alt.unsqueeze(1)
