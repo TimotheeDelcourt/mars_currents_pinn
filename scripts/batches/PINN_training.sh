@@ -3,10 +3,10 @@
 
 #SBATCH --ntasks=1
 #SBATCH --gpus-per-node=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=10
 #SBATCH --gres=gpumem:20g
 #SBATCH --time=200:00:00
-#SBATCH --mem-per-cpu=2G
+#SBATCH --mem-per-cpu=10G
 #SBATCH --tmp=500G                        # per node!!
 #SBATCH --job-name=PINN_training
 #SBATCH --mail-type=END

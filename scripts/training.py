@@ -20,7 +20,7 @@ def train(model, training_loader, validation_loader,
     torch.set_num_threads(n_cpus)
     train_loss_hist = []
     val_loss_hist = []
-    pbar = trange(num_epochs)
+    # pbar = trange(num_epochs)
     scheduler_bool = 0
     epoch_scheduler = 9999999
 
