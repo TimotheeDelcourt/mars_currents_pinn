@@ -28,7 +28,7 @@ def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus):
         progress = i * 100 / len(nb_train)
         if abs(progress - round(progress)) < 1e-1:
             if round(progress) != round(progress_old):
-                print(f"{progress:.0f} %", end='\r', flush=True)
+                print(f"{progress:.0f} %")#, end='\r', flush=True)
             progress_old = progress
 
     train_indices = torch.tensor(train_indices, dtype=int)
