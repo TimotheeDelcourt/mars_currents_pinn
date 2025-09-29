@@ -17,7 +17,7 @@ def run_ensemble_training():
     # Bootstrap iteration---------------------------------------------
     for _ in range(config.training_config['ensemble_size']):
 
-
+        print('Making folder')
         # Make folder-------------------------------------------------
         counter = config.training_config['bootstrap_counter_start']
         base_folder_name = 'models/PINN_ext_bootstrap_'
