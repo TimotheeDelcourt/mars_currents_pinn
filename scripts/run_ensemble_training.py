@@ -3,14 +3,14 @@ import os
 import torch
 import bootstrap_sampling
 import shutil
-import numpy as np
 from torch import optim
 from training import train 
-import pandas as pd
 from neuralnets import NeuralNet
 
 while (os.path.basename(os.getcwd()) != 'project2') | (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
+    print(os.path.basename(os.getcwd()))
     os.chdir('../')
+
 
 def run_ensemble_training():
 
