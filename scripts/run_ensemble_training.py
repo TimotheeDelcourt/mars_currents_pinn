@@ -7,9 +7,14 @@ from torch import optim
 from training import train 
 from neuralnets import NeuralNet
 
+i = 0
 while (os.path.basename(os.getcwd()) != 'project2') | (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
-    print(os.path.basename(os.getcwd()))
+    print(i,os.path.basename(os.getcwd()))
+    i+=1
     os.chdir('../')
+    if i == 20:
+        assert 1 == 0
+    
 
 
 def run_ensemble_training():
