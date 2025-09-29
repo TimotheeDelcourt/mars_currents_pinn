@@ -17,6 +17,7 @@ def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus):
     print(len(torch.unique(nb_train))/len(nb_train)) #check
 
     train_indices = []
+    progress_old = -1
     for i,nb in enumerate(nb_train):
         cond = torch.isin(elements=nb_all,test_element=nb)
         nb_indices = torch.nonzero(cond).squeeze().tolist()
@@ -26,7 +27,9 @@ def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus):
             train_indices.extend(nb_indices)
         progress = i * 100 / len(nb_train)
         if abs(progress - round(progress)) < 1e-1:
-            print(f"{progress:.0f} %", end='\r', flush=True)
+            if round(progress) != round(progress_old):
+                print(f"{progress:.0f} %", end='\r', flush=True)
+            progress_old = progress
 
     train_indices = torch.tensor(train_indices, dtype=int)
     val_indices_bool = torch.isin(elements=nb_all, test_elements=nb_train, invert=True)
