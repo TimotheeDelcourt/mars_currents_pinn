@@ -41,6 +41,9 @@ def run_ensemble_training():
 
         # Load and sample datasets ----------------------------------
         input = torch.load('data/position_mso.pt')
+        alt = torch.load('data/position_pc.pt')[:,0]
+        alt = alt.unsqueeze(1)
+        input = torch.concatenate((input, alt), dim=1)
         crustal_field_mso = torch.load('data/crustal_field_mso.pt')
         observation_mso = torch.load('data/observation_mso.pt')
         target = observation_mso - crustal_field_mso

@@ -84,7 +84,7 @@ def train(model, training_loader, validation_loader,
             xaxis = range(len(train_loss_hist))
             axs[0].plot(xaxis, train_loss_hist, label="Train loss")
             axs[1].plot(xaxis, train_loss_hist, label="Train logloss")
-            axs[0].plot(xaxis, val_loss_hist, label="Validation loss (no soft constraint)")
+            axs[0].plot(xaxis, val_loss_hist, label="Validation loss")
             axs[1].plot(xaxis, val_loss_hist, label="Validation logloss")
             axs[1].set_xscale("log")
             axs[1].set_yscale("log")
