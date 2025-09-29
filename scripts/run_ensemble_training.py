@@ -47,7 +47,7 @@ def run_ensemble_training():
         crustal_field_mso = torch.load('data/crustal_field_mso.pt')
         observation_mso = torch.load('data/observation_mso.pt')
         target = observation_mso - crustal_field_mso
-        del crustal_field_mso, observation_mso
+        del crustal_field_mso, observation_mso, alt
         orbit_nb = torch.load('data/orbit_nb.pt')
 
 
