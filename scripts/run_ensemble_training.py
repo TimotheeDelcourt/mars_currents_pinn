@@ -20,7 +20,7 @@ def run_ensemble_training():
 
         # Make folder-------------------------------------------------
         counter = config.training_config['bootstrap_counter_start']
-        base_folder_name = 'models/PINN_2025_bootstrap_'
+        base_folder_name = 'models/PINN_ext_bootstrap_'
         # Keep creating new folders with incremented names until one with a unique name is found
         while True:
             folder_name = base_folder_name+str(counter)
@@ -42,10 +42,10 @@ def run_ensemble_training():
         # Load and sample datasets ----------------------------------
         input = torch.load('data/position_mso.pt')
         crustal_field_mso = torch.load('data/crustal_field_mso.pt')
-        observation_mso = torch.tensor(pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['SS Bx','SS By','SS Bz']).values, dtype=torch.float32)
+        observation_mso = torch.load('data/observation_mso.pt')
         target = observation_mso - crustal_field_mso
         del crustal_field_mso, observation_mso
-        orbit_nb = torch.tensor(pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['orbit number']).values, dtype=int)
+        orbit_nb = torch.load('data/orbit_nb.pt')
 
 
 
