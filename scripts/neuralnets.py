@@ -4,7 +4,7 @@ import torch
 
 class NeuralNet(nn.Module):
     def __init__(self,
-                 num_hidden_layers = 9,
+                 num_hidden_layers,
                  activation=nn.Tanh(),
                  xyz_mean = 6, # km
                  xyz_std = 3968, # km

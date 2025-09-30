@@ -21,8 +21,8 @@ def train(model, training_loader, validation_loader,
     train_loss_hist = []
     val_loss_hist = []
     # pbar = trange(num_epochs)
-    scheduler_bool = 0
-    epoch_scheduler = 9999999
+    # scheduler_bool = 0
+    # epoch_scheduler = 9999999
 
     # initial lr
     for param_group in optimizer.param_groups:
@@ -78,6 +78,7 @@ def train(model, training_loader, validation_loader,
         
         np.save(folder_name+'/val_loss_hist.npy', val_loss_hist)
         np.save(folder_name+'/training_history.npy', train_loss_hist)
+        torch.save(model.state_dict(), os.path.join(folder_name, f'model{epoch}.pt'))
 
         if epoch>0:
             fig, axs=plt.subplots(1,2, figsize=(12,4))
@@ -95,27 +96,26 @@ def train(model, training_loader, validation_loader,
             plt.savefig(os.path.join(folder_name, 'losses.png'))
             plt.close()
             
-        torch.save(model.state_dict(), os.path.join(folder_name, 'model.pt'))
       
         # pbar.set_postfix_str(f'''Epoch {epoch}, Loss: {total_loss}, Validation Loss: {validation_loss}, lr: {optimizer.param_groups[0]['lr']}''')#{torch.sqrt(laplacian_loss/soft_con_weight)}''')  , Laplacian Loss: {laplacian_loss}
         # print("", end="", flush=True)  # Force flushing the output
 
-        if epoch>300:
-            last200 = val_loss_hist[-200:]
-            smooth = pd.DataFrame(last200).rolling(10,center=True).mean()
-            plt.plot(last200,color='black')
-            plt.plot(smooth,color='blue',linewidth=2)
-            plt.savefig(os.path.join(folder_name, 'losses_zoom.png'))
-            plt.close()
-            m, _ = utils.slope(val_loss_hist, 200)
+        # if epoch>300:
+        #     last200 = val_loss_hist[-200:]
+        #     smooth = pd.DataFrame(last200).rolling(10,center=True).mean()
+        #     plt.plot(last200,color='black')
+        #     plt.plot(smooth,color='blue',linewidth=2)
+        #     plt.savefig(os.path.join(folder_name, 'losses_zoom.png'))
+        #     plt.close()
+        #     m, _ = utils.slope(val_loss_hist, 200)
            
-            if (m >= -1.6e-6) & (scheduler_bool == 0):
-                scheduler_bool = 1
-                epoch_scheduler = epoch
-                for param_group in optimizer.param_groups:
-                    param_group['lr'] = 1e-4
+        #     if (m >= -1.6e-6) & (scheduler_bool == 0):
+        #         scheduler_bool = 1
+        #         epoch_scheduler = epoch
+        #         for param_group in optimizer.param_groups:
+        #             param_group['lr'] = 1e-4
 
-            elif (epoch > epoch_scheduler + 200) & (m >= -1e-9) & (val_loss_hist[-1] < val_loss_hist[-2]) & (val_loss_hist[-1] < val_loss_hist[-3]) & (val_loss_hist[-1] < val_loss_hist[-4]):
-                print('Plateau reached!')
-                break
+        #     elif (epoch > epoch_scheduler + 200) & (m >= -1e-9) & (val_loss_hist[-1] < val_loss_hist[-2]) & (val_loss_hist[-1] < val_loss_hist[-3]) & (val_loss_hist[-1] < val_loss_hist[-4]):
+        #         print('Plateau reached!')
+        #         break
 
