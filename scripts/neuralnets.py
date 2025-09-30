@@ -6,6 +6,10 @@ class NeuralNet(nn.Module):
     def __init__(self,
                  num_hidden_layers = 9,
                  activation=nn.Tanh(),
+                 xyz_mean = 6, # km
+                 xyz_std = 3968, # km
+                 alt_mean = 3235, # km
+                 alt_std = 1829, # km
                  ):
         super(NeuralNet, self).__init__()
         # Number of hidden layers 
@@ -14,6 +18,11 @@ class NeuralNet(nn.Module):
         self.num_neurons = np.linspace(10,10+20*(num_hidden_layers-1),num_hidden_layers,dtype=int)
         # Activation function 
         self.activation = activation
+        # Standardization parameters
+        self.xyz_mean = xyz_mean
+        self.xyz_std = xyz_std
+        self.alt_mean = alt_mean
+        self.alt_std = alt_std
 
         
         # create network by stacking layers
@@ -27,6 +36,10 @@ class NeuralNet(nn.Module):
         self.network = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
 
     def forward(self, x):
+        x[:,:3] -= self.xyz_mean
+        x[:,:3] /= self.xyz_std
+        x[:,3] -= self.alt_mean
+        x[:,3] /= self.alt_std
         x = self.network(x)
         return x
     

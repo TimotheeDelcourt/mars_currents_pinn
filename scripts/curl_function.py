@@ -1,7 +1,6 @@
 import torch
 
 
-
 def curl_differentiable(Input, Output):
     """
     Compute curl while maintaining computational graph for higher-order derivatives
