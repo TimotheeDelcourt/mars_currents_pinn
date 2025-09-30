@@ -36,11 +36,10 @@ class NeuralNet(nn.Module):
         self.network = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
 
     def forward(self, x):
-        x[:,:3] -= self.xyz_mean
-        x[:,:3] /= self.xyz_std
-        x[:,3] -= self.alt_mean
-        x[:,3] /= self.alt_std
-        x = self.network(x)
+        x_norm = (x[:, :3] - self.xyz_mean) / self.xyz_std
+        alt_norm = (x[:, 3] - self.alt_mean) / self.alt_std
+        x_norm = torch.cat([x_norm, alt_norm.unsqueeze(1)], dim=1)
+        x = self.network(x_norm)
         return x
     
 
