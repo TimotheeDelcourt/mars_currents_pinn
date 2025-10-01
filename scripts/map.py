@@ -38,7 +38,7 @@ def one_map(parameter, direction, filetype):
         units = 'nT'
     elif parameter == 'J':
         series = [-200,200]
-        cmap = 'roma'
+        cmap = 'vik'
         reverse_bool = False
         units = 'nA/m2'
 

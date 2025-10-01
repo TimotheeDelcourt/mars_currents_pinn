@@ -36,9 +36,9 @@ def predict(input, k, minibatch=config.prediction_config['minibatch']):
     
  
     # Load model -----------------------------------------------
-    model = NeuralNet().to(device)
     folder_name = 'models/PINN_ext_bootstrap_'+str(k)
-    file_name = folder_name+'/model.pt'
+    file_name = folder_name+f"/model{config.prediction_config['epoch_nb']}.pt"
+    model = NeuralNet().to(device)
     network = torch.load(file_name, map_location=torch.device("cpu"))
     # network = {k: v.to(device) for k, v in network.items()}
     model.load_state_dict(network)
@@ -282,5 +282,5 @@ if __name__ == '__main__':
         df['Jx'] = J[:,0].to('cpu').detach()
         df['Jy'] = J[:,1].to('cpu').detach()
         df['Jz'] = J[:,2].to('cpu').detach()
-        df.to_csv('predictions/PINN_MSO_model'+str(config.prediction_config['bootstrap_nb'])+'_'+str(config.prediction_config['alt'])+'km_fibonacci.csv', index=False)
+        df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['bootstrap_nb']}_epoch{config.prediction_config['epoch_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
         print(df)

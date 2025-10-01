@@ -4,7 +4,8 @@ import torch
 
 class NeuralNet(nn.Module):
     def __init__(self,
-                 num_hidden_layers,
+                 num_hidden_layers=2,
+                 num_neurons_per_layer=32,
                  activation=nn.Tanh(),
                  xyz_mean = 6, # km
                  xyz_std = 3968, # km
@@ -15,7 +16,8 @@ class NeuralNet(nn.Module):
         # Number of hidden layers 
         self.num_hidden_layers = num_hidden_layers
         # Number of neurons or units per layer 
-        self.num_neurons = np.linspace(10,10+20*(num_hidden_layers-1),num_hidden_layers,dtype=int)
+        # self.num_neurons = np.linspace(10,10+20*(num_hidden_layers-1),num_hidden_layers,dtype=int)
+        self.num_neurons = np.ones(num_hidden_layers, dtype=int)*num_neurons_per_layer
         # Activation function 
         self.activation = activation
         # Standardization parameters

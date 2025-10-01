@@ -37,6 +37,7 @@ def run_ensemble_training():
         shutil.copyfile('scripts/configs/config_training.py', folder_name+'/config_training.py')
         # and training script
         shutil.copyfile('scripts/training.py', folder_name+'/training.py')
+        shutil.copyfile('scripts/neuralnets.py', folder_name+'/neuralnets.py')
 
 
         # Load and sample datasets ----------------------------------
@@ -67,7 +68,7 @@ def run_ensemble_training():
         print(f'''Device: {DEVICE}''')
 
         # Load network ---------------------------------------------
-        model = NeuralNet(num_hidden_layers=config.training_config['num_hidden_layers']).to(DEVICE)
+        model = NeuralNet().to(DEVICE)
 
         # Training -------------------------------------------------
         num_epochs = config.training_config['num_epochs']
