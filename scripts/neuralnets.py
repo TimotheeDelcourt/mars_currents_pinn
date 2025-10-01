@@ -4,8 +4,8 @@ import torch
 
 class NeuralNet(nn.Module):
     def __init__(self,
-                 num_hidden_layers=2,
-                 num_neurons_per_layer=32,
+                 num_hidden_layers=1,
+                 num_neurons_per_layer=16,
                  activation=nn.Tanh(),
                  xyz_mean = 6, # km
                  xyz_std = 3968, # km
@@ -28,14 +28,21 @@ class NeuralNet(nn.Module):
 
         
         # create network by stacking layers
-        self.input_layer = nn.Sequential(nn.Linear(4, self.num_neurons[0]),
-                        self.activation)
-        self.hidden_layers =[]
-        for i in np.arange(1,num_hidden_layers):
-            self.hidden_layers.append(nn.Linear(self.num_neurons[i-1], self.num_neurons[i]))
-            self.hidden_layers.append(self.activation)
-        self.output_layer = nn.Linear(self.num_neurons[-1], 3)
-        self.network = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
+        if self.num_hidden_layers > 1:
+            self.input_layer = nn.Sequential(nn.Linear(4, self.num_neurons[0]),
+                            self.activation)
+            self.hidden_layers =[]
+            for i in np.arange(1,num_hidden_layers):
+                self.hidden_layers.append(nn.Linear(self.num_neurons[i-1], self.num_neurons[i]))
+                self.hidden_layers.append(self.activation)
+            self.output_layer = nn.Linear(self.num_neurons[-1], 3)
+            self.network = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
+
+        elif self.num_hidden_layers == 1:
+            self.input_layer = nn.Sequential(nn.Linear(4, self.num_neurons[0]),
+                            self.activation)
+            self.output_layer = nn.Linear(self.num_neurons[0], 3)
+            self.network = nn.Sequential(*self.input_layer, self.output_layer)
 
     def forward(self, x):
         x_norm = (x[:, :3] - self.xyz_mean) / self.xyz_std

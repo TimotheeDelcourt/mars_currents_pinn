@@ -3,7 +3,6 @@ from torch.utils.data import DataLoader, TensorDataset
 
 
 
-
 def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus):
     
     print('Preparing bootstrap...')

@@ -119,3 +119,59 @@ def train(model, training_loader, validation_loader,
         #         print('Plateau reached!')
         #         break
 
+
+def train_noval(model, training_loader, 
+          num_epochs, optimizer, device, folder_name, 
+          n_cpus, lossfn):
+    
+
+    training_loader_size = len(training_loader)
+    torch.set_num_threads(n_cpus)
+    train_loss_hist = []
+
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = 1e-3
+
+    # for epoch in pbar:
+    for epoch in range(num_epochs):
+
+        running_loss = 0.0
+
+        for (x_train, y_train) in training_loader:
+            
+            x_train = x_train.to(device).requires_grad_(True)
+            y_train = y_train.to(device)
+
+            # PINN:
+            A_pred = model(x_train)
+            y_pred = curl_differentiable(x_train, A_pred)
+
+            loss = lossfn(y_pred, y_train)
+            running_loss += loss.item()
+            
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+        
+        total_loss = running_loss/training_loader_size
+        train_loss_hist.append(total_loss)
+
+
+        # VALIDATION -----------------------------------------------------
+        np.save(folder_name+'/training_history.npy', train_loss_hist)
+        torch.save(model.state_dict(), os.path.join(folder_name, f'model{epoch}.pt'))
+
+        if epoch>0:
+            fig, axs=plt.subplots(1,2, figsize=(12,4))
+            xaxis = range(len(train_loss_hist))
+            axs[0].plot(xaxis, train_loss_hist, label="Train loss")
+            axs[1].plot(xaxis, train_loss_hist, label="Train logloss")
+            axs[1].set_xscale("log")
+            axs[1].set_yscale("log")
+            for ax in axs:
+                ax.set_xlabel('Epoch')
+                ax.grid(True, which="both", ls=":")
+                ax.legend()
+            plt.savefig(os.path.join(folder_name, 'losses.png'))
+            plt.close()

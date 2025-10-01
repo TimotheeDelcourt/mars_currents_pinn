@@ -4,8 +4,10 @@ import torch
 import bootstrap_sampling
 import shutil
 from torch import optim
-from training import train 
+from training import train, train_noval
 from neuralnets import NeuralNet
+from torch.utils.data import DataLoader, TensorDataset
+
 
 while (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
     os.chdir('../')
@@ -20,7 +22,7 @@ def run_ensemble_training():
         print('Making folder')
         # Make folder-------------------------------------------------
         counter = config.training_config['bootstrap_counter_start']
-        base_folder_name = 'models/PINN_ext_bootstrap_'
+        base_folder_name = 'models/PINN_ext_model_'
         # Keep creating new folders with incremented names until one with a unique name is found
         while True:
             folder_name = base_folder_name+str(counter)
@@ -53,13 +55,6 @@ def run_ensemble_training():
         orbit_nb = torch.load('data/orbit_nb.pt')
 
 
-
-
-        train_loader, val_loader = bootstrap_sampling.prepare_bootstrap_dataloaders(input, target, orbit_nb, 
-                                                                                    config.training_config['batch_size'],
-                                                                                    config.training_config['n_cpus'],
-                                                                                    )
-           
         # Device ---------------------------------------------------
         if torch.cuda.is_available():
             DEVICE = torch.device('cuda')
@@ -70,17 +65,30 @@ def run_ensemble_training():
         # Load network ---------------------------------------------
         model = NeuralNet().to(DEVICE)
 
-        # Training -------------------------------------------------
+        # parameters -------------------------------------------------
         num_epochs = config.training_config['num_epochs']
         optimizer = optim.Adam(model.parameters())
         n_cpus = config.training_config['n_cpus']
         lossfn = config.training_config['lossfn']
+        batch_size = config.training_config['batch_size']
 
-        train(model,train_loader,val_loader, num_epochs, optimizer, DEVICE,
+        if config.training_config['bagging']:
+            train_loader, val_loader = bootstrap_sampling.prepare_bootstrap_dataloaders(input, target, orbit_nb, 
+                                                                                    batch_size,
+                                                                                    n_cpus,
+                                                                                    )
+            train(model,train_loader,val_loader, num_epochs, optimizer, DEVICE,
               folder_name, n_cpus, lossfn)
+        else:
+            train_dataset = TensorDataset(input, target)
+            train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=n_cpus)
 
+            train_noval(model, train_loader, num_epochs, optimizer, DEVICE,
+                        folder_name, n_cpus, lossfn)
 
-run_ensemble_training()
+if __name__ == "__main__":
+    
+    run_ensemble_training()
 
 
         

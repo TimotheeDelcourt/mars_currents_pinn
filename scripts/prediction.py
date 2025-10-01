@@ -1,7 +1,6 @@
 import torch
 import torch.utils
 import torch.utils.data
-from neuralnets import NeuralNet
 import configs.config_prediction as config
 import numpy as np
 import utils
@@ -9,6 +8,7 @@ import os
 import pandas as pd
 import warnings
 from curl_function import curl_differentiable
+import importlib.util
 warnings.filterwarnings("ignore")
 try:
     import torch_directml
@@ -37,8 +37,18 @@ def predict(input, k, minibatch=config.prediction_config['minibatch']):
  
     # Load model -----------------------------------------------
     folder_name = 'models/PINN_ext_bootstrap_'+str(k)
-    file_name = folder_name+f"/model{config.prediction_config['epoch_nb']}.pt"
+    # Load the script as a module
+    try:
+        spec = importlib.util.spec_from_file_location("neuralnets", folder_name+"/neuralnets.py")
+        neuralnets_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(neuralnets_module)
+        NeuralNet = neuralnets_module.NeuralNet
+        print('Imported neuralnets from', folder_name)
+    except:
+        from neuralnets import NeuralNet
+
     model = NeuralNet().to(device)
+    file_name = folder_name+f"/model{config.prediction_config['epoch_nb']}.pt"
     network = torch.load(file_name, map_location=torch.device("cpu"))
     # network = {k: v.to(device) for k, v in network.items()}
     model.load_state_dict(network)
