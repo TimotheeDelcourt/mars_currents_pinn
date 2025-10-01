@@ -55,7 +55,7 @@ def all_maps():
     if config.map_config['filetype'] == 'both':
         filetypes = ['.png','.pdf']
     else:
-        filetypes = config.map_config['filetype']
+        filetypes = [config.map_config['filetype']]
     for filetype in filetypes:
         for parameter in ['B', 'J']:
             for direction in ['x', 'y', 'z']:

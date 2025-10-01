@@ -67,7 +67,7 @@ def run_ensemble_training():
         print(f'''Device: {DEVICE}''')
 
         # Load network ---------------------------------------------
-        model = NeuralNet().to(DEVICE)
+        model = NeuralNet(num_hidden_layers=config.training_config['num_hidden_layers']).to(DEVICE)
 
         # Training -------------------------------------------------
         num_epochs = config.training_config['num_epochs']
