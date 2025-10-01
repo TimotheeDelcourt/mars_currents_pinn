@@ -8,7 +8,8 @@ training_config = {
     'batch_size': 20000,
     # 'num_hidden_layers': 4,
     'activation': nn.Tanh(),
-    'lossfn': nn.HuberLoss(delta=7),#nn.MSELoss(),
+    # 'lossfn': nn.HuberLoss(delta=7),#nn.MSELoss(),
+    'lossfn': nn.MSELoss(),
     'ensemble_size': 100,
     'bootstrap_counter_start': 1,
 }
