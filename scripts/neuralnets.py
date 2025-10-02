@@ -42,13 +42,18 @@ class NeuralNet(nn.Module):
         # self.cos_lon_mean = cos_lon_mean
         # self.cos_lon_std = cos_lon_std
 
+        if torch.cuda.is_available():
+            DEVICE = torch.device('cuda')
+        else:
+            DEVICE = 'cpu'
+
         self.means = torch.tensor([xyz_mean, xyz_mean, xyz_mean,
                                    alt_mean, sin_colat_mean, cos_colat_mean,
-                                   sin_lon_mean, cos_lon_mean])
+                                   sin_lon_mean, cos_lon_mean]).to(DEVICE)
 
         self.stds = torch.tensor([xyz_std, xyz_std, xyz_std,
                                    alt_std, sin_colat_std, cos_colat_std,
-                                   sin_lon_std, cos_lon_std])
+                                   sin_lon_std, cos_lon_std]).to(DEVICE)
 
         # create network by stacking layers
         if self.num_hidden_layers > 1:
