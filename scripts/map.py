@@ -61,8 +61,12 @@ def all_maps():
         filetypes = [config.map_config['filetype']]
     for filetype in filetypes:
         for parameter in ['B', 'J']:
-            for direction in ['x', 'y', 'z']:
-                one_map(parameter,direction,filetype)
+            if config.map_config['frame'] == 'spherical':
+                for direction in ['r', 't', 'p']:
+                    one_map(parameter,direction,filetype)
+            elif config.map_config['frame'] == 'cartesian':
+                for direction in ['x', 'y', 'z']:
+                    one_map(parameter,direction,filetype)
 
 
 if __name__=='__main__':

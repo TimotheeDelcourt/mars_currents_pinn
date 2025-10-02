@@ -11,14 +11,14 @@ class NeuralNet(nn.Module):
                 xyz_std = 3968, # km
                 alt_mean = 3235, # km
                 alt_std = 1829, # km
-                sin_colat_mean = 0.7,
-                sin_colat_std = 0.3,
-                cos_colat_mean = 0.0,
-                cos_colat_std = 0.7,
-                sin_lon_mean = 0.0,
-                sin_lon_std = 0.7,
-                cos_lon_mean = 0.0,
-                cos_lon_std = 0.7,
+                # sin_colat_mean = 0.7,
+                # sin_colat_std = 0.3,
+                # cos_colat_mean = 0.0,
+                # cos_colat_std = 0.7,
+                # sin_lon_mean = 0.0,
+                # sin_lon_std = 0.7,
+                # cos_lon_mean = 0.0,
+                # cos_lon_std = 0.7,
                 ):
         super(NeuralNet, self).__init__()
         # Number of hidden layers 
@@ -29,10 +29,10 @@ class NeuralNet(nn.Module):
         # Activation function 
         self.activation = activation
         # Standardization parameters
-        # self.xyz_mean = xyz_mean
-        # self.xyz_std = xyz_std
-        # self.alt_mean = alt_mean
-        # self.alt_std = alt_std
+        self.xyz_mean = xyz_mean
+        self.xyz_std = xyz_std
+        self.alt_mean = alt_mean
+        self.alt_std = alt_std
         # self.sin_colat_mean = sin_colat_mean
         # self.sin_colat_std = sin_colat_std
         # self.cos_colat_mean = cos_colat_mean
@@ -42,22 +42,25 @@ class NeuralNet(nn.Module):
         # self.cos_lon_mean = cos_lon_mean
         # self.cos_lon_std = cos_lon_std
 
-        if torch.cuda.is_available():
-            DEVICE = torch.device('cuda')
-        else:
-            DEVICE = 'cpu'
+        # try:
+        #     DEVICE = torch.device('privateuseone:0')
+        # except:
+        #     if torch.cuda.is_available():
+        #         DEVICE = torch.device('cuda')
+        #     else:
+        #         DEVICE = 'cpu'
 
-        self.means = torch.tensor([xyz_mean, xyz_mean, xyz_mean,
-                                   alt_mean, sin_colat_mean, cos_colat_mean,
-                                   sin_lon_mean, cos_lon_mean]).to(DEVICE)
+        # self.means = torch.tensor([xyz_mean, xyz_mean, xyz_mean,
+        #                            alt_mean, sin_colat_mean, cos_colat_mean,
+        #                            sin_lon_mean, cos_lon_mean], device=DEVICE)
 
-        self.stds = torch.tensor([xyz_std, xyz_std, xyz_std,
-                                   alt_std, sin_colat_std, cos_colat_std,
-                                   sin_lon_std, cos_lon_std]).to(DEVICE)
+        # self.stds = torch.tensor([xyz_std, xyz_std, xyz_std,
+        #                            alt_std, sin_colat_std, cos_colat_std,
+        #                            sin_lon_std, cos_lon_std], device=DEVICE)
 
         # create network by stacking layers
         if self.num_hidden_layers > 1:
-            self.input_layer = nn.Sequential(nn.Linear(8, self.num_neurons[0]),
+            self.input_layer = nn.Sequential(nn.Linear(4, self.num_neurons[0]),
                             self.activation)
             self.hidden_layers =[]
             for i in np.arange(1,num_hidden_layers):
@@ -67,17 +70,17 @@ class NeuralNet(nn.Module):
             self.network = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
 
         elif self.num_hidden_layers == 1:
-            self.input_layer = nn.Sequential(nn.Linear(8, self.num_neurons[0]),
+            self.input_layer = nn.Sequential(nn.Linear(4, self.num_neurons[0]),
                             self.activation)
             self.output_layer = nn.Linear(self.num_neurons[0], 3)
             self.network = nn.Sequential(*self.input_layer, self.output_layer)
 
     def forward(self, x):
-        # x_norm = (x[:, :3] - self.xyz_mean) / self.xyz_std
-        # alt_norm = (x[:, 3] - self.alt_mean) / self.alt_std
-        # x_norm = torch.cat([x_norm, alt_norm.unsqueeze(1)], dim=1)
-        x_norm = (x - self.means) / self.stds
-        x = self.network(x_norm)
+        x_norm = (x[:, :3] - self.xyz_mean) / self.xyz_std
+        alt_norm = (x[:, 3] - self.alt_mean) / self.alt_std
+        x_norm = torch.cat([x_norm, alt_norm.unsqueeze(1)], dim=1)
+        # x_norm = (x - self.means) / self.stds
+        # x = self.network(x_norm)
         return x
     
 

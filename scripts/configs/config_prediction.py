@@ -12,7 +12,7 @@ prediction_config = {
     'bootstrap_max': 100, # if predict_ensemble = 1
     'bootstrap_nb':None, # predict_single_model = 1
     'model_nb':1,
-    'epoch_nb':121, # predict_single_model = 1
+    'epoch_nb':139, # predict_single_model = 1
     'alt': 200, # only used if input_type is 'fibonacci_sphere', Gao: 150 or 250 km
     'num_workers': 8,
     'minibatch': 1, 

@@ -10,15 +10,11 @@ import warnings
 from curl_function import curl_differentiable
 import importlib.util
 warnings.filterwarnings("ignore")
-try:
-    import torch_directml
-    # device = torch_directml.device()
-    device = torch.device('privateuseone:0')
-except:
-    if torch.cuda.is_available():
-        device = torch.device('cuda')
-    else:
-        device = 'cpu'
+
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+else:
+    device = 'cpu'
 print('Working on device: ', device)
 
 # while os.path.basename(os.getcwd()) != 'project':
@@ -57,7 +53,7 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
 
     model = NeuralNet().to(device)
     file_name = folder_name+f"/model{config.prediction_config['epoch_nb']}.pt"
-    network = torch.load(file_name, map_location=torch.device("cpu"))
+    network = torch.load(file_name, map_location=device)
     # network = {k: v.to(device) for k, v in network.items()}
     model.load_state_dict(network)
 
@@ -290,16 +286,36 @@ if __name__ == '__main__':
     if config.predict_single_model:
         n = config.prediction_config['num_samples']
         df, input_tensor = utils.fibonacci_sphere(samples = n,   alt = config.prediction_config['alt'])
+        # old
         alt = torch.ones(len(df))*config.prediction_config['alt']
         alt = alt.unsqueeze(1)
         input_tensor = torch.concatenate((input_tensor, alt), dim=1)
+        # new
+        # df['colat'] = 90 - df['lat']
+        # df['sin_colat'] = np.sin(np.radians(df['colat']))
+        # df['cos_colat'] = np.cos(np.radians(df['colat']))
+        # df['sin_lon'] = np.sin(np.radians(df['lon']))
+        # df['cos_lon'] = np.cos(np.radians(df['lon']))
+        # input_spherical = torch.tensor(df[['alt','sin_colat','cos_colat','sin_lon','cos_lon']].values, dtype=torch.float32)
+        # input_tensor = torch.concatenate((input_tensor, input_spherical), dim=1)
         B, J = predict(input_tensor)
+        # df.drop(columns=['sin_colat','cos_colat','sin_lon','cos_lon','colat'], inplace=True)
         df['Bx'] = B[:,0].to('cpu').detach()
         df['By'] = B[:,1].to('cpu').detach()
         df['Bz'] = B[:,2].to('cpu').detach()
         df['Jx'] = J[:,0].to('cpu').detach()
         df['Jy'] = J[:,1].to('cpu').detach()
         df['Jz'] = J[:,2].to('cpu').detach()
+        Br, Bt, Bp = utils.field_cart_to_spher(B[:,0], B[:,1], B[:,2],
+                                            lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+        Jr, Jt, Jp = utils.field_cart_to_spher(J[:,0], J[:,1], J[:,2],
+                                            lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+        df['Br'] = Br.to('cpu').detach()
+        df['Bt'] = Bt.to('cpu').detach()
+        df['Bp'] = Bp.to('cpu').detach()
+        df['Jr'] = Jr.to('cpu').detach()
+        df['Jt'] = Jt.to('cpu').detach()
+        df['Jp'] = Jp.to('cpu').detach()
         
         if config.prediction_config['bootstrap_nb'] is None:
             df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_epoch{config.prediction_config['epoch_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)

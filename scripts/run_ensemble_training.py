@@ -45,17 +45,19 @@ def run_ensemble_training():
         # Load and sample datasets ----------------------------------
         print('Loading data')
         # old:
-        # input = torch.load('data/position_mso.pt')
-        # alt = torch.load('data/position_pc.pt')[:,0]
-        # alt = alt.unsqueeze(1)
-        # input = torch.concatenate((input, alt), dim=1)
+        input = torch.load('data/position_mso.pt')
+        alt = torch.load('data/position_pc.pt')[:,0]
+        alt = alt.unsqueeze(1)
+        input = torch.concatenate((input, alt), dim=1)
         # new:
-        input_xyz = torch.load('data/position_mso.pt')
-        input_sph = torch.load('data/position_mso_spherical.pt')
-        input = torch.concatenate((input_xyz, input_sph), dim=1)
+        # input_xyz = torch.load('data/position_mso.pt')
+        # input_sph = torch.load('data/position_mso_spherical.pt')
+        # input = torch.concatenate((input_xyz, input_sph), dim=1)
+
         crustal_field_mso = torch.load('data/crustal_field_mso.pt')
         observation_mso = torch.load('data/observation_mso.pt')
         target = observation_mso - crustal_field_mso
+
         condition = input[:,3] <= 300 #km, only low altitude!
         input = input[condition]
         target = target[condition]
