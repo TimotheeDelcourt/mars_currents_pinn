@@ -79,8 +79,7 @@ class NeuralNet(nn.Module):
         x_norm = (x[:, :3] - self.xyz_mean) / self.xyz_std
         alt_norm = (x[:, 3] - self.alt_mean) / self.alt_std
         x_norm = torch.cat([x_norm, alt_norm.unsqueeze(1)], dim=1)
-        # x_norm = (x - self.means) / self.stds
-        # x = self.network(x_norm)
+        x = self.network(x_norm)
         return x
     
 
