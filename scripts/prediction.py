@@ -25,18 +25,26 @@ print('Working on device: ', device)
 #     os.chdir('../')
  
 
-def predict(input, k, minibatch=config.prediction_config['minibatch']):
+def predict(input, minibatch=config.prediction_config['minibatch']):
     '''
     Input must be a torch tensor of shape (n,4) with columns: X,Y,Z [km], alt [km]
     k: int, number of the bootstrap model to use.
     Output: tuple of (1) torch tensor of shape (n,3) with columns: Bx, By, Bz [nT]; (2) torch tensor of shape (n,3) with columns: Jx, Jy, Jz [mA/m2]
     device = GPU if minibatch = 0, else CPU.
     '''
-    print('Starting prediction, bootstrap model', k)
+    
     
  
     # Load model -----------------------------------------------
-    folder_name = 'models/PINN_ext_bootstrap_'+str(k)
+    if config.prediction_config['bootstrap_nb'] is None:
+        k = config.prediction_config['model_nb']
+        folder_name = 'models/PINN_ext_model_'+str(k)
+        print('Starting prediction, model', k)
+    else:
+        k = config.prediction_config['bootstrap_nb']
+        folder_name = 'models/PINN_ext_bootstrap_'+str(k)
+        print('Starting prediction, bootstrap model', k)
+
     # Load the script as a module
     try:
         spec = importlib.util.spec_from_file_location("neuralnets", folder_name+"/neuralnets.py")
@@ -285,12 +293,18 @@ if __name__ == '__main__':
         alt = torch.ones(len(df))*config.prediction_config['alt']
         alt = alt.unsqueeze(1)
         input_tensor = torch.concatenate((input_tensor, alt), dim=1)
-        B, J = predict(input_tensor, config.prediction_config['bootstrap_nb'])
+        B, J = predict(input_tensor)
         df['Bx'] = B[:,0].to('cpu').detach()
         df['By'] = B[:,1].to('cpu').detach()
         df['Bz'] = B[:,2].to('cpu').detach()
         df['Jx'] = J[:,0].to('cpu').detach()
         df['Jy'] = J[:,1].to('cpu').detach()
         df['Jz'] = J[:,2].to('cpu').detach()
-        df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['bootstrap_nb']}_epoch{config.prediction_config['epoch_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+        
+        if config.prediction_config['bootstrap_nb'] is None:
+            df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_epoch{config.prediction_config['epoch_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+        else:
+            df.to_csv(f"predictions/bootstraps/PINN_MSO_model{config.prediction_config['bootstrap_nb']}_epoch{config.prediction_config['epoch_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+        
+        
         print(df)

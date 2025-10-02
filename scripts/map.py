@@ -30,24 +30,27 @@ def one_map(parameter, direction, filetype):
     pygmt.config(FONT_ANNOT_PRIMARY='16p')
 
     label = parameter+direction
+    fill = data[label].values
     
     if parameter == 'B':
         series = [-30,30]
+        series = [fill.min(), fill.max()]
         cmap = 'roma'
         reverse_bool = True
         units = 'nT'
     elif parameter == 'J':
         series = [-200,200]
+        series = [fill.min(), fill.max()]
         cmap = 'vik'
         reverse_bool = False
         units = 'nA/m2'
 
     # plot upper layer
     pygmt.makecpt(cmap=cmap, reverse = reverse_bool, series= series)
-    fig.plot(x=data['lon'].values, y=data['lat'].values, style="c0.03c", fill=data[label].values, cmap=True, region=region, projection=projection)
+    fig.plot(x=data['lon'].values, y=data['lat'].values, style="c0.03c", fill=fill, cmap=True, region=region, projection=projection)
    
     fig.basemap(region=region, projection=projection, frame=frame)
-    pygmt.makecpt(cmap=cmap, reverse = reverse_bool, series= series, background="o+t")
+    pygmt.makecpt(cmap=cmap, reverse = reverse_bool, background="o+t", series= series)
     fig.colorbar(frame=["x+l"+label+f" [{units}]"],position="JBC+o0c/1c")
     fig.savefig(pathoutput+'/'+label+filetype, dpi = 300)
 

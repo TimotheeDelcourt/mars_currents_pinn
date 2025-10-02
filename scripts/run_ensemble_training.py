@@ -44,14 +44,18 @@ def run_ensemble_training():
 
         # Load and sample datasets ----------------------------------
         print('Loading data')
-        input = torch.load('data/position_mso.pt')
-        alt = torch.load('data/position_pc.pt')[:,0]
-        alt = alt.unsqueeze(1)
-        input = torch.concatenate((input, alt), dim=1)
+        # old:
+        # input = torch.load('data/position_mso.pt')
+        # alt = torch.load('data/position_pc.pt')[:,0]
+        # alt = alt.unsqueeze(1)
+        # input = torch.concatenate((input, alt), dim=1)
+        # new:
+        input_xyz = torch.load('data/position_mso.pt')
+        input_sph = torch.load('data/position_pc.pt')
+        input = torch.concatenate((input_xyz, input_sph), dim=1)
         crustal_field_mso = torch.load('data/crustal_field_mso.pt')
         observation_mso = torch.load('data/observation_mso.pt')
         target = observation_mso - crustal_field_mso
-        del crustal_field_mso, observation_mso, alt
         orbit_nb = torch.load('data/orbit_nb.pt')
 
 
