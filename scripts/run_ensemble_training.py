@@ -40,6 +40,7 @@ def run_ensemble_training():
         # and training script
         shutil.copyfile('scripts/training.py', folder_name+'/training.py')
         shutil.copyfile('scripts/neuralnets.py', folder_name+'/neuralnets.py')
+        os.makedirs(folder_name+'/models/')
 
 
         # Load and sample datasets ----------------------------------
@@ -47,8 +48,7 @@ def run_ensemble_training():
         # old:
         input = torch.load('data/position_mso.pt')
         alt = torch.load('data/position_pc.pt')[:,0]
-        alt = alt.unsqueeze(1)
-        input = torch.concatenate((input, alt), dim=1)
+        condition = alt <= 175 #km, only low altitude!
         # new:
         # input_xyz = torch.load('data/position_mso.pt')
         # input_sph = torch.load('data/position_mso_spherical.pt')
@@ -58,7 +58,7 @@ def run_ensemble_training():
         observation_mso = torch.load('data/observation_mso.pt')
         target = observation_mso - crustal_field_mso
 
-        condition = input[:,3] <= 300 #km, only low altitude!
+        
         input = input[condition]
         target = target[condition]
         
@@ -76,7 +76,7 @@ def run_ensemble_training():
 
         # parameters -------------------------------------------------
         num_epochs = config.training_config['num_epochs']
-        optimizer = optim.Adam(model.parameters())
+        optimizer = optim.Adam(model.parameters(), lr=config.training_config['learning_rate'])
         n_cpus = config.training_config['n_cpus']
         lossfn = config.training_config['lossfn']
         batch_size = config.training_config['batch_size']

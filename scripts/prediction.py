@@ -52,7 +52,7 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
         from neuralnets import NeuralNet
 
     model = NeuralNet().to(device)
-    file_name = folder_name+f"/model{config.prediction_config['epoch_nb']}.pt"
+    file_name = folder_name+f"/models/model{config.prediction_config['epoch_nb']}.pt"
     network = torch.load(file_name, map_location=device)
     # network = {k: v.to(device) for k, v in network.items()}
     model.load_state_dict(network)

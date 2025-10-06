@@ -13,5 +13,6 @@ training_config = {
     'ensemble_size': 100,
     'bootstrap_counter_start': 1,
     'bagging':False,
+    'learning_rate': 0.01,
 }
 

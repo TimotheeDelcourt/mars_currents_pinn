@@ -157,10 +157,10 @@ def train_noval(model, training_loader,
         total_loss = running_loss/training_loader_size
         train_loss_hist.append(total_loss)
 
-
-        # VALIDATION -----------------------------------------------------
         np.save(folder_name+'/training_history.npy', train_loss_hist)
-        torch.save(model.state_dict(), os.path.join(folder_name, f'model{epoch}.pt'))
+        if (epoch%10==0):
+            torch.save(model.state_dict(), os.path.join(folder_name+'/models/', f'model{epoch}.pt'))
+        torch.save(model.state_dict(), os.path.join(folder_name+'/models/', f'model.pt'))
 
         if epoch>0:
             fig, axs=plt.subplots(1,2, figsize=(12,4))
