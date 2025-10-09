@@ -1,8 +1,8 @@
 
 
-# dashboard
-predict_single_model = 1
-predict_ensemble = 0
+# # dashboard
+# predict_single_model = 1
+# predict_ensemble = 0
 
 
 
@@ -11,8 +11,8 @@ prediction_config = {
     'num_samples': 900000, # fibonnaci_sphere
     'bootstrap_max': 100, # if predict_ensemble = 1
     'bootstrap_nb':None, # predict_single_model = 1
-    'model_nb':3,
-    'epoch_nb':9325, # predict_single_model = 1
+    'model_nb':5,
+    'epoch_nb':None, # None = last epoch
     'alt': 150, # only used if input_type is 'fibonacci_sphere', Gao: 150 or 250 km
     'num_workers': 8,
     'minibatch': 1, 

@@ -7,14 +7,23 @@ class NeuralNet(nn.Module):
                 num_hidden_layers=1,
                 num_neurons_per_layer=16,
                 activation=nn.Tanh(),
+
                 # all data:
                 # xyz_mean = 6, # km
                 # xyz_std = 3968, # km
-                # data < 175 km altitude:
-                xyz_mean = -202, # km
-                xyz_std = 2038, # km
                 # alt_mean = 3235, # km
                 # alt_std = 1829, # km
+
+                # data < 175 km altitude:
+                # xyz_mean = -202, # km
+                # xyz_std = 2038, # km
+
+                # data < 250 km altitude:
+                xyz_mean = -48,
+                xyz_std = 2069,
+                alt_mean = 195, # km
+                alt_std = 31, # km
+
                 # sin_colat_mean = 0.7,
                 # sin_colat_std = 0.3,
                 # cos_colat_mean = 0.0,
@@ -35,8 +44,8 @@ class NeuralNet(nn.Module):
         # Standardization parameters
         self.xyz_mean = xyz_mean
         self.xyz_std = xyz_std
-        # self.alt_mean = alt_mean
-        # self.alt_std = alt_std
+        self.alt_mean = alt_mean
+        self.alt_std = alt_std
         # self.sin_colat_mean = sin_colat_mean
         # self.sin_colat_std = sin_colat_std
         # self.cos_colat_mean = cos_colat_mean
@@ -64,7 +73,7 @@ class NeuralNet(nn.Module):
 
         # create network by stacking layers
         if self.num_hidden_layers > 1:
-            self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
+            self.input_layer = nn.Sequential(nn.Linear(4, self.num_neurons[0]),
                             self.activation)
             self.hidden_layers =[]
             for i in np.arange(1,num_hidden_layers):
@@ -74,13 +83,15 @@ class NeuralNet(nn.Module):
             self.network = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
 
         elif self.num_hidden_layers == 1:
-            self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
+            self.input_layer = nn.Sequential(nn.Linear(4, self.num_neurons[0]),
                             self.activation)
             self.output_layer = nn.Linear(self.num_neurons[0], 3)
             self.network = nn.Sequential(*self.input_layer, self.output_layer)
 
     def forward(self, x):
-        x_norm = (x - self.xyz_mean) / self.xyz_std
+        x_norm = (x[:, :3] - self.xyz_mean) / self.xyz_std
+        alt_norm = (x[:, 3] - self.alt_mean) / self.alt_std
+        x_norm = torch.cat([x_norm, alt_norm.unsqueeze(1)], dim=1)
         x = self.network(x_norm)
         return x
     

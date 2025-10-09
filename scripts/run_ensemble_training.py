@@ -40,29 +40,28 @@ def run_ensemble_training():
         # and training script
         shutil.copyfile('scripts/training.py', folder_name+'/training.py')
         shutil.copyfile('scripts/neuralnets.py', folder_name+'/neuralnets.py')
+        shutil.copyfile('scripts/run_ensemble_training.py', folder_name+'/run_ensemble_training.py')
         os.makedirs(folder_name+'/models/')
 
 
         # Load and sample datasets ----------------------------------
         print('Loading data')
         # old:
-        input = torch.load('data/position_mso.pt')
-        alt = torch.load('data/position_pc.pt')[:,0]
-        condition = alt <= 175 #km, only low altitude!
+        # input = torch.load('data/position_mso.pt')
+        # alt = torch.load('data/position_pc.pt')[:,0]
+        # condition = alt <= 175 #km, only low altitude!
         # new:
-        # input_xyz = torch.load('data/position_mso.pt')
-        # input_sph = torch.load('data/position_mso_spherical.pt')
-        # input = torch.concatenate((input_xyz, input_sph), dim=1)
+        input_xyz = torch.load('data/position_mso.pt')
+        input_sph = torch.load('data/position_mso_spherical.pt')
+        alt = input_sph[:,0].unsqueeze(1)
+        input = torch.concatenate((input_xyz, alt), dim=1)
+        condition = input[:,3] <= 250
+        input = input[condition]
 
         crustal_field_mso = torch.load('data/crustal_field_mso.pt')
         observation_mso = torch.load('data/observation_mso.pt')
         target = observation_mso - crustal_field_mso
-
-        
-        input = input[condition]
         target = target[condition]
-        
-
 
         # Device ---------------------------------------------------
         if torch.cuda.is_available():

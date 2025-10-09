@@ -52,7 +52,11 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
         from neuralnets import NeuralNet
 
     model = NeuralNet().to(device)
-    file_name = folder_name+f"/models/model{config.prediction_config['epoch_nb']}.pt"
+    epoch_nb = config.prediction_config['epoch_nb']
+    if epoch_nb == None:
+        file_name = folder_name+"/models/model.pt"
+    else:
+        file_name = folder_name+f"/models/model{epoch_nb}.pt"
     network = torch.load(file_name, map_location=device)
     # network = {k: v.to(device) for k, v in network.items()}
     model.load_state_dict(network)
@@ -92,212 +96,23 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
     
 
 
-def ensemble_predict(input_type=config.prediction_config['input_type'],nb_bootstraps = config.prediction_config['bootstrap_max']):
-    
-    '''
-    input_type: str, 'fibonacci_sphere' or 'meshgrid'
-    '''
 
-    if input_type == 'fibonacci_sphere':
-        n = config.prediction_config['num_samples']
-        if config.prediction_config['regional']:
-            df, tensor_cart, n = utils.fibonacci_sphere_restricted(samples = n,
-                                                alt = config.prediction_config['alt'],
-                                                lat_deg = config.prediction_config['lat_deg'],
-                                                lon_deg = config.prediction_config['lon_deg'])
-        else:
-            df, tensor_cart = utils.fibonacci_sphere(samples = n,
-                                                alt = config.prediction_config['alt'])
-        
-    elif input_type == 'data_input':
-        if config.prediction_config['data_input_file'] == 'MGS':
-            file_name = 'data/MGS_MO_obs_input.pt'
-        elif config.prediction_config['data_input_file'] == 'ABSPOday':
-            file_name = 'data/ABSPOday_input.pt'
-        elif config.prediction_config['data_input_file'] == 'MAV':
-            file_name = 'data/MAV_obs_input_2025.pt'
-        else:
-            file_name = 'data/'+config.prediction_config['data_input_file']+'_obs_cleaned_input.pt'
-        tensor_sph = torch.load(file_name)
-        tensor_cart = utils.spherical_to_cartesian_torch(tensor_sph[:,0], tensor_sph[:,1], tensor_sph[:,2])
-        n = len(tensor_cart)
-
-    elif input_type == 'other':
-        try:
-            df = pd.read_pickle(config.prediction_config['other_path'])
-        except:
-            df = pd.read_csv(config.prediction_config['other_path'], header = 0)
-        df['alt'] = config.prediction_config['alt']
-        r = torch.tensor(df['alt'].values + 3390.0, dtype=torch.float32)
-        lat_deg = torch.tensor(df['lat'].values, dtype=torch.float32)
-        lon_deg = torch.tensor(df['lon'].values, dtype=torch.float32)
-        lon_rad = torch.deg2rad(lon_deg)
-        colat_rad = torch.deg2rad(90 - lat_deg)
-        tensor_cart = utils.spherical_to_cartesian_torch(r, colat_rad, lon_rad)
-        n = len(tensor_cart)
-
-    elif input_type == 'grid':
-        lmax = 161
-        n_grid_SH = (lmax+1)*2
-        df, lmax2 = utils.generate_input_grid(n = n_grid_SH, save = 0)
-        lmax2 = int(lmax2)
-        assert lmax == lmax2, 'lmax should be the same as in the input grid generation'
-        df['alt'] = config.prediction_config['alt']
-        r = torch.tensor(df['alt'].values + 3393.5, dtype=torch.float32)
-        lat_deg = torch.tensor(df['lat'].values, dtype=torch.float32)
-        lon_deg = torch.tensor(df['lon'].values, dtype=torch.float32)
-        lon_rad = torch.deg2rad(lon_deg)
-        colat_rad = torch.deg2rad(90 - lat_deg)
-        tensor_cart = utils.spherical_to_cartesian_torch(r, colat_rad, lon_rad)
-        n = len(tensor_cart)
-        
-    if config.prediction_config['V only']:
-        running_V = torch.zeros(size=(n,))
-        count = 0
-        for k in range(nb_bootstraps+1):
-            if config.prediction_config['data'] == 'all':
-                folder_name = 'outputs/models/PINN_bootstrap_'+str(k)
-            elif config.prediction_config['data'] == 2017:
-                folder_name = 'outputs/models/PINN_L19data_bootstrap_'+str(k)
-            else:
-                print('Please provide a valid data option, i.e. "all" or 2017')
-                return
-            
-            if os.path.exists(folder_name):
-                count += 1
-                result_V = predict(tensor_cart, k)
-                running_V += result_V.to('cpu').detach()
-                print(f'Bootstrap {k} done')
-                # clear gpu memory
-                del result_V
-        
-        V_final = running_V/count
-
-        if config.prediction_config['data'] == 'all':
-            model_name = 'PINN_2025'
-        elif config.prediction_config['data'] == 2017:
-            model_name = 'PINN17'
-
-       
-        df['V'] = V_final
-        n_grid = len(np.unique(df['lat']))
-
-        output_name = 'outputs/predictions/synthetic/'+model_name+'_ensemble_'+str(count)+'models_'+str(config.prediction_config['alt'])+'km'
-        if input_type == 'other':
-            output_name += '_' + config.prediction_config['other_name']
-        output_name += f'_n{n_grid}_V'
-        
-        df = df.drop(columns=['alt'])
-        df.to_csv(output_name+'.csv', index=False)
-    
-    else:
-        prediction_ensemble = torch.zeros(size=(n,4))
-        std_ensemble = torch.zeros(size=(n,4))
-        count = 0
-        for k in range(nb_bootstraps+1):
-            if config.prediction_config['data'] == 'all':
-                folder_name = 'outputs/models/PINN_2025_bootstrap_'+str(k)
-            elif config.prediction_config['data'] == 2017:
-                folder_name = 'outputs/models/PINN_L19data_bootstrap_'+str(k)
-            else:
-                print('Please provide a valid data option, i.e. "all" or 2017')
-                return
-            
-            if os.path.exists(folder_name):
-                count += 1
-
-                if config.prediction_config['minibatch'] == 0:
-                    dev0 = device
-                elif config.prediction_config['minibatch'] == 1:
-                    dev0 = 'cpu'
-
-                if (input_type == 'fibonacci_sphere') | (input_type == 'other') | (input_type == 'grid'):
-                    result_vector = predict(tensor_cart, k)
-                    result_scalar = torch.sqrt(result_vector[:,0]**2 + result_vector[:,1]**2 + result_vector[:,2]**2)
-                    Br, Bt, Bp = utils.field_cart_to_spher(result_vector[:,0], result_vector[:,1], result_vector[:,2],
-                                                        lat_deg = df['lat'], lon_deg = df['lon'], device = dev0)
-                    
-                elif (input_type == 'data_input'):
-                    result_vector = predict(tensor_cart, k)
-                    result_scalar = torch.sqrt(result_vector[:,0]**2 + result_vector[:,1]**2 + result_vector[:,2]**2)
-                    Br, Bt, Bp = utils.field_cart_to_spher(result_vector[:,0], result_vector[:,1], result_vector[:,2],
-                                                        colat_rad= tensor_sph[:,1], lon_rad = tensor_sph[:,2], device = dev0)
-                    
-                result = torch.stack((Br, Bt, Bp, result_scalar), dim=1)
-                if config.prediction_config['minibatch'] == 0:
-                    result = result.to('cpu').detach()
-                # clear gpu memory
-                del result_vector, result_scalar, Br, Bt, Bp
-                prediction_ensemble += result
-                std_ensemble += result**2
-                print(f'Bootstrap {k} done')
-        
-        prediction_ensemble /= count
-        std_ensemble = torch.sqrt(std_ensemble/count - prediction_ensemble**2)
-
-        if config.prediction_config['data'] == 'all':
-            model_name = 'PINN_2025'
-        elif config.prediction_config['data'] == 2017:
-            model_name = 'PINN17'
-
-        if (input_type == 'fibonacci_sphere') or (input_type == 'other'):
-            df['Br'] = prediction_ensemble[:,0]
-            df['Bt'] = prediction_ensemble[:,1]
-            df['Bp'] = prediction_ensemble[:,2]
-            df['B'] = prediction_ensemble[:,3]
-            df['Br_std'] = std_ensemble[:,0]
-            df['Bt_std'] = std_ensemble[:,1]
-            df['Bp_std'] = std_ensemble[:,2]
-            df['B_std'] = std_ensemble[:,3]
-
-            output_name = 'outputs/predictions/synthetic/'+model_name+'_ensemble_'+str(count)+'models_'+str(config.prediction_config['alt'])+'km'
-            if input_type == 'fibonacci_sphere':
-                output_name += '_fibonacci'
-            elif input_type == 'other':
-                output_name += '_' + config.prediction_config['other_name']
-            
-            if config.prediction_config['regional']:
-                output_name += '_regional'
-
-            # pd.to_pickle(df, output_name+'.pkl')
-            df = df.drop(columns=['alt'])
-            df.to_csv(output_name+'.csv', index=False)
-
-        elif input_type == 'data_input':
-            torch.save(prediction_ensemble, 'outputs/predictions/data_input/'+model_name+'_ensemble_'+str(count)+'models_'+config.prediction_config['data_input_file']+'.pt')
-            torch.save(std_ensemble, 'outputs/predictions/data_input/'+model_name+'_ensemble_'+str(count)+'models_'+config.prediction_config['data_input_file']+'_std.pt')
-        
-        elif input_type == 'grid':
-            grid_Br = prediction_ensemble[:,0].reshape(n_grid_SH, 2*n_grid_SH)
-            grid_Bt = prediction_ensemble[:,1].reshape(n_grid_SH, 2*n_grid_SH)
-            grid_Bp = prediction_ensemble[:,2].reshape(n_grid_SH, 2*n_grid_SH)
-
-            np.save('outputs/predictions/synthetic/PINN_2025_grid_130km_Br_lmax161.npy', grid_Br)
-            np.save('outputs/predictions/synthetic/PINN_2025_grid_130km_Bt_lmax161.npy', grid_Bt)
-            np.save('outputs/predictions/synthetic/PINN_2025_grid_130km_Bp_lmax161.npy', grid_Bp)
 
 
 if __name__ == '__main__':
 
   
-    if config.predict_ensemble:
-        ensemble_predict()
+    # if config.predict_ensemble:
+    #     ensemble_predict()
     
-    if config.predict_single_model:
+    # if config.predict_single_model:
+    if True:
         n = config.prediction_config['num_samples']
         df, input_tensor = utils.fibonacci_sphere(samples = n,   alt = config.prediction_config['alt'])
         # old
-        alt = torch.ones(len(df))*config.prediction_config['alt']
-        alt = alt.unsqueeze(1)
-        input_tensor = torch.concatenate((input_tensor, alt), dim=1)
-        # new
-        # df['colat'] = 90 - df['lat']
-        # df['sin_colat'] = np.sin(np.radians(df['colat']))
-        # df['cos_colat'] = np.cos(np.radians(df['colat']))
-        # df['sin_lon'] = np.sin(np.radians(df['lon']))
-        # df['cos_lon'] = np.cos(np.radians(df['lon']))
-        # input_spherical = torch.tensor(df[['alt','sin_colat','cos_colat','sin_lon','cos_lon']].values, dtype=torch.float32)
-        # input_tensor = torch.concatenate((input_tensor, input_spherical), dim=1)
+        # alt = torch.ones(len(df))*config.prediction_config['alt']
+        # alt = alt.unsqueeze(1)
+        # input_tensor = torch.concatenate((input_tensor, alt), dim=1)
         B, J = predict(input_tensor)
         # df.drop(columns=['sin_colat','cos_colat','sin_lon','cos_lon','colat'], inplace=True)
         df['Bx'] = B[:,0].to('cpu').detach()
@@ -317,10 +132,12 @@ if __name__ == '__main__':
         df['Jt'] = Jt.to('cpu').detach()
         df['Jp'] = Jp.to('cpu').detach()
         
-        if config.prediction_config['bootstrap_nb'] is None:
-            df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_epoch{config.prediction_config['epoch_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
-        else:
-            df.to_csv(f"predictions/bootstraps/PINN_MSO_model{config.prediction_config['bootstrap_nb']}_epoch{config.prediction_config['epoch_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
-        
+
+        epoch_nb = config.prediction_config['epoch_nb']
+        if epoch_nb == None:
+            epoch_nb = 'last'
+
+        df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_epoch{epoch_nb}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+       
         
         print(df)
