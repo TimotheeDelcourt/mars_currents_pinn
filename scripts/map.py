@@ -33,15 +33,15 @@ def one_map(parameter, direction, filetype):
     fill = data[label].values
     
     if parameter == 'B':
-        series = [-30,30]
-        # series = [fill.min(), fill.max()]
+        # series = [-30,30]
+        series = [fill.min(), fill.max()]
         cmap = 'roma'
         reverse_bool = True
         units = 'nT'
     elif parameter == 'J':
         # series = [-30,30]
-        series = [-200,200]
-        # series = [fill.min(), fill.max()]
+        # series = [-200,200]
+        series = [fill.min(), fill.max()]
         cmap = 'vik'
         reverse_bool = False
         units = 'nA/m2'

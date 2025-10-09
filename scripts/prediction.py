@@ -110,9 +110,9 @@ if __name__ == '__main__':
         n = config.prediction_config['num_samples']
         df, input_tensor = utils.fibonacci_sphere(samples = n,   alt = config.prediction_config['alt'])
         # old
-        # alt = torch.ones(len(df))*config.prediction_config['alt']
-        # alt = alt.unsqueeze(1)
-        # input_tensor = torch.concatenate((input_tensor, alt), dim=1)
+        alt = torch.ones(len(df))*config.prediction_config['alt']
+        alt = alt.unsqueeze(1)
+        input_tensor = torch.concatenate((input_tensor, alt), dim=1)
         B, J = predict(input_tensor)
         # df.drop(columns=['sin_colat','cos_colat','sin_lon','cos_lon','colat'], inplace=True)
         df['Bx'] = B[:,0].to('cpu').detach()

@@ -129,8 +129,8 @@ def train_noval(model, training_loader,
     torch.set_num_threads(n_cpus)
     train_loss_hist = []
 
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = 1e-3
+    # for param_group in optimizer.param_groups:
+    #     param_group['lr'] = 1e-3
 
     # for epoch in pbar:
     for epoch in range(num_epochs):
