@@ -5,7 +5,7 @@ import torch
 class NeuralNet(nn.Module):
     def __init__(self,
                 num_hidden_layers=1,
-                num_neurons_per_layer=16,
+                num_neurons_per_layer=128,
                 activation=nn.Tanh(),
 
                 # all data:
