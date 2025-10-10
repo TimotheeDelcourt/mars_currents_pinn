@@ -55,7 +55,7 @@ def run_ensemble_training():
         input_sph = torch.load('data/position_mso_spherical.pt')
         alt = input_sph[:,0].unsqueeze(1)
         input = torch.concatenate((input_xyz, alt), dim=1)
-        condition = input[:,3] <= 250
+        condition = input[:,3] <= config.training_config['altitude_max']
         input = input[condition]
 
         crustal_field_mso = torch.load('data/crustal_field_mso.pt')
