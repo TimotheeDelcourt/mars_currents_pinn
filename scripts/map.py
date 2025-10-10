@@ -21,7 +21,6 @@ def one_map(parameter, direction, filetype):
     # print(data.describe())
 
     pathoutput = 'maps/'+model_name
-    os.makedirs(pathoutput, exist_ok=True)
        
     fig = pygmt.Figure()
     region = [-180, 180, -80, 80]
@@ -33,18 +32,24 @@ def one_map(parameter, direction, filetype):
     fill = data[label].values
     
     if parameter == 'B':
-        # series = [-30,30]
-        series = [fill.min(), fill.max()]
+        series = [-30,30]
         cmap = 'roma'
         reverse_bool = True
         units = 'nT'
     elif parameter == 'J':
-        # series = [-30,30]
-        # series = [-200,200]
-        series = [fill.min(), fill.max()]
+        series = [-200,200]
         cmap = 'vik'
         reverse_bool = False
         units = 'nA/m2'
+
+    if config.map_config['colorbar_fixed']:
+        add_txt = '_fixed_range'
+    else:
+        series = [fill.min(), fill.max()]
+        add_txt = '_free_range'
+
+    pathoutput += add_txt
+    os.makedirs(pathoutput, exist_ok=True)
 
     # plot upper layer
     pygmt.makecpt(cmap=cmap, reverse = reverse_bool, series= series)
