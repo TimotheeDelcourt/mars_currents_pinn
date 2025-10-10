@@ -52,6 +52,7 @@ def run_ensemble_training():
     # condition = alt <= 175 #km, only low altitude!
     # new:
     input_xyz = torch.load('data/position_mso.pt')
+    
     input_sph = torch.load('data/position_mso_spherical.pt')
     alt = input_sph[:,0].unsqueeze(1)
     input = torch.concatenate((input_xyz, alt), dim=1)
@@ -65,10 +66,10 @@ def run_ensemble_training():
     input = input[condition]
     target = target[condition]
 
-    xyz_mean = torch.mean(input)
-    xyz_std = torch.std(input)
-    alt_mean = torch.mean(alt)
-    alt_std = torch.std(alt)
+    xyz_mean = torch.mean(input[:,:3])
+    xyz_std = torch.std(input[:,:3])
+    alt_mean = torch.mean(input[:,3])
+    alt_std = torch.std(input[:,3])
 
     print('Input shape: ', input.shape)
     print('xyz_mean, xyz_std: ', xyz_mean, xyz_std)
