@@ -4,9 +4,13 @@ import torch
 
 class NeuralNet(nn.Module):
     def __init__(self,
-                num_hidden_layers=1,
-                num_neurons_per_layer=8,
-                activation=nn.Tanh(),
+                num_hidden_layers,
+                num_neurons_per_layer,
+                activation,
+                xyz_mean, # km
+                xyz_std, # km
+                alt_mean, # km
+                alt_std, # km
 
                 # all data:
                 # xyz_mean = 6, # km
@@ -25,10 +29,10 @@ class NeuralNet(nn.Module):
                 # alt_std = 31, # km
 
                 # data < 600 km altitude:
-                xyz_mean = 18,
-                xyz_std = 2144,
-                alt_mean = 321, # km
-                alt_std = 131, # km
+                # xyz_mean = 18,
+                # xyz_std = 2144,
+                # alt_mean = 321, # km
+                # alt_std = 131, # km
 
                 # sin_colat_mean = 0.7,
                 # sin_colat_std = 0.3,

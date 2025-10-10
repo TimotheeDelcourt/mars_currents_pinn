@@ -55,13 +55,24 @@ def run_ensemble_training():
         input_sph = torch.load('data/position_mso_spherical.pt')
         alt = input_sph[:,0].unsqueeze(1)
         input = torch.concatenate((input_xyz, alt), dim=1)
-        condition = input[:,3] <= config.training_config['altitude_max']
-        input = input[condition]
-
-        # crustal_field_mso = torch.load('data/crustal_field_mso.pt')
+        
+        crustal_field_mso = torch.load('data/crustal_field_mso.pt')
         observation_mso = torch.load('data/observation_mso.pt')
-        target = observation_mso #- crustal_field_mso
+        target = observation_mso - crustal_field_mso
+
+        condition = (input[:,3] <= config.training_config['altitude_max']) & torch.any((target <= 30) & (target >= -30), dim=1)
+        # condition = torch.any((target <= 30) & (target >= -30), dim=1)
+        input = input[condition]
         target = target[condition]
+
+        xyz_mean = torch.mean(input)
+        xyz_std = torch.std(input)
+        alt_mean = torch.mean(alt)
+        alt_std = torch.std(alt)
+
+        print('Input shape: ', input.shape)
+        print('xyz_mean, xyz_std: ', xyz_mean, xyz_std)
+        print('alt_mean, alt_std: ', alt_mean, alt_std)
 
         # Device ---------------------------------------------------
         if torch.cuda.is_available():
@@ -71,7 +82,15 @@ def run_ensemble_training():
         print(f'''Device: {DEVICE}''')
 
         # Load network ---------------------------------------------
-        model = NeuralNet().to(DEVICE)
+        model = NeuralNet(
+            num_hidden_layers=config.training_config['num_hidden_layers'],
+            num_neurons_per_layer=config.training_config['num_neurons_per_layer'],
+            xyz_mean=xyz_mean,
+            xyz_std=xyz_std,
+            alt_mean=alt_mean,
+            alt_std=alt_std,
+            activation=config.training_config['activation']
+        ).to(DEVICE)
 
         # parameters -------------------------------------------------
         num_epochs = config.training_config['num_epochs']

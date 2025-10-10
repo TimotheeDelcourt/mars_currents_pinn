@@ -14,6 +14,8 @@ training_config = {
     'bootstrap_counter_start': 1,
     'bagging':False,
     'learning_rate': 0.1,
-    'altitude_max':600, #adjust neuralnet.py accordingly!
+    'altitude_max':999999,
+    'num_hidden_layers':1,
+    'num_neurons_per_layer':8,
 }
 

@@ -9,9 +9,9 @@
 prediction_config = {
     'input_type': 'fibonacci_sphere', #'grid', # 'fibonacci_sphere' or 'data_input'
     'num_samples': 900000, # fibonnaci_sphere
-    'bootstrap_max': 100, # if predict_ensemble = 1
+    'bootstrap_max': None, # if predict_ensemble = 1
     'bootstrap_nb':None, # predict_single_model = 1
-    'model_nb':10,
+    'model_nb':12,
     'epoch_nb':None, # None = last epoch
     'alt': 150, # only used if input_type is 'fibonacci_sphere', Gao: 150 or 250 km
     'num_workers': 8,
