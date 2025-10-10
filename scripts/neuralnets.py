@@ -19,10 +19,16 @@ class NeuralNet(nn.Module):
                 # xyz_std = 2038, # km
 
                 # data < 250 km altitude:
-                xyz_mean = -48,
-                xyz_std = 2069,
-                alt_mean = 195, # km
-                alt_std = 31, # km
+                # xyz_mean = -48,
+                # xyz_std = 2069,
+                # alt_mean = 195, # km
+                # alt_std = 31, # km
+
+                # data < 600 km altitude:
+                xyz_mean = 18,
+                xyz_std = 2144,
+                alt_mean = 321, # km
+                alt_std = 131, # km
 
                 # sin_colat_mean = 0.7,
                 # sin_colat_std = 0.3,
