@@ -11,7 +11,7 @@ training_config = {
     # 'lossfn': nn.HuberLoss(delta=7),#nn.MSELoss(),
     'lossfn': nn.MSELoss(),
     # 'ensemble_size': 100,
-    # 'bootstrap_counter_start': 1,
+    'bootstrap_counter_start': 1,
     # 'bagging':False,
     'learning_rate': 0.1,
     'altitude_max':1500,
