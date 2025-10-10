@@ -12,7 +12,7 @@ training_config = {
     'lossfn': nn.MSELoss(),
     # 'ensemble_size': 100,
     'bootstrap_counter_start': 1,
-    # 'bagging':False,
+    'bagging':False,
     'learning_rate': 0.1,
     'altitude_max':1500,
     'num_hidden_layers':1,
