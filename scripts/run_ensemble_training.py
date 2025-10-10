@@ -58,9 +58,9 @@ def run_ensemble_training():
         condition = input[:,3] <= config.training_config['altitude_max']
         input = input[condition]
 
-        crustal_field_mso = torch.load('data/crustal_field_mso.pt')
+        # crustal_field_mso = torch.load('data/crustal_field_mso.pt')
         observation_mso = torch.load('data/observation_mso.pt')
-        target = observation_mso - crustal_field_mso
+        target = observation_mso #- crustal_field_mso
         target = target[condition]
 
         # Device ---------------------------------------------------
