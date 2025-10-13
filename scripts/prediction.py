@@ -64,6 +64,10 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
     # except:
     #     from neuralnets import NeuralNet
     #     model = NeuralNet().to(device)
+
+    # l1 = sum(p.abs().sum() for p in model.parameters()).item()
+    # print(l1)
+    # assert 1 == 0
     
     epoch_nb = config.prediction_config['epoch_nb']
     if epoch_nb == None:

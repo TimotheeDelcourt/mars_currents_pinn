@@ -122,12 +122,14 @@ def train(model, training_loader, validation_loader,
 
 def train_noval(model, training_loader, 
           num_epochs, optimizer, device, folder_name, 
-          n_cpus, lossfn):
+          n_cpus, lossfn, l1_lambda = 0):
     
 
     training_loader_size = len(training_loader)
     torch.set_num_threads(n_cpus)
     train_loss_hist = []
+    if l1_lambda != 0:
+        l1_hist = []
 
     # for param_group in optimizer.param_groups:
     #     param_group['lr'] = 1e-3
@@ -136,6 +138,7 @@ def train_noval(model, training_loader,
     for epoch in range(num_epochs):
 
         running_loss = 0.0
+        running_l1 = 0.0
 
         for (x_train, y_train) in training_loader:
             
@@ -149,15 +152,22 @@ def train_noval(model, training_loader,
             loss = lossfn(y_pred, y_train)
             running_loss += loss.item()
             
+            if l1_lambda != 0:
+                l1 = sum(p.abs().sum() for p in model.parameters()).item()
+                running_l1 += l1
+                loss += l1_lambda*l1
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
         
-        total_loss = running_loss/training_loader_size
-        train_loss_hist.append(total_loss)
-
+        train_loss_hist.append(running_loss/training_loader_size)
         np.save(folder_name+'/training_history.npy', train_loss_hist)
+
+        if l1_lambda != 0:
+            l1_hist.append(running_l1/training_loader_size)
+            np.save(folder_name+'/l1_history.npy', l1_hist)
+
         # if (epoch%10==0):
         #     torch.save(model.state_dict(), os.path.join(folder_name+'/models/', f'model{epoch}.pt'))
         torch.save(model.state_dict(), os.path.join(folder_name+'/models/', f'model.pt'))
@@ -165,8 +175,10 @@ def train_noval(model, training_loader,
         if epoch>0:
             fig, axs=plt.subplots(1,2, figsize=(12,4))
             xaxis = range(len(train_loss_hist))
-            axs[0].plot(xaxis, train_loss_hist, label="Train loss")
+            axs[0].plot(xaxis, train_loss_hist, label=f"Train loss: {train_loss_hist[-1]}")
             axs[1].plot(xaxis, train_loss_hist, label="Train logloss")
+            if l1_lambda != 0:
+                axs[1].plot(xaxis, l1_hist, label=f"L1: {l1_hist[-1]}")
             axs[1].set_xscale("log")
             axs[1].set_yscale("log")
             for ax in axs:
@@ -175,3 +187,9 @@ def train_noval(model, training_loader,
                 ax.legend()
             plt.savefig(os.path.join(folder_name, 'losses.png'))
             plt.close()
+
+        if epoch > 30:
+            m, _ = utils.slope(train_loss_hist, 10)
+            if m > -0.001:
+                print('Plateau reached!')
+                break
