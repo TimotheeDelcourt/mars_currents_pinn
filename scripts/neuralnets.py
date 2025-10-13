@@ -106,3 +106,64 @@ class NeuralNet(nn.Module):
         return x
     
 
+class NeuralNet_indep(nn.Module):
+    def __init__(self,
+                num_hidden_layers,
+                num_neurons_per_layer,
+                activation,
+                xyz_mean, # km
+                xyz_std, # km
+                ):
+        super(NeuralNet_indep, self).__init__()
+        # Number of hidden layers 
+        self.num_hidden_layers = num_hidden_layers
+        self.num_neurons = np.ones(num_hidden_layers, dtype=int)*num_neurons_per_layer
+        # Activation function 
+        self.activation = activation
+        # Standardization parameters
+        self.xyz_mean = xyz_mean
+        self.xyz_std = xyz_std
+
+        # NN X
+        self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
+                        self.activation)
+        self.hidden_layers =[]
+        for i in np.arange(1,num_hidden_layers):
+            self.hidden_layers.append(nn.Linear(self.num_neurons[i-1], self.num_neurons[i]))
+            self.hidden_layers.append(self.activation)
+        self.output_layer = nn.Linear(self.num_neurons[-1], 1)
+        self.network_x = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
+
+        # NN Y
+        self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
+                        self.activation)
+        self.hidden_layers =[]
+        for i in np.arange(1,num_hidden_layers):
+            self.hidden_layers.append(nn.Linear(self.num_neurons[i-1], self.num_neurons[i]))
+            self.hidden_layers.append(self.activation)
+        self.output_layer = nn.Linear(self.num_neurons[-1], 1)
+        self.network_y = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
+
+        # NN Z
+        self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
+                        self.activation)
+        self.hidden_layers =[]
+        for i in np.arange(1,num_hidden_layers):
+            self.hidden_layers.append(nn.Linear(self.num_neurons[i-1], self.num_neurons[i]))
+            self.hidden_layers.append(self.activation)
+        self.output_layer = nn.Linear(self.num_neurons[-1], 1)
+        self.network_z = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
+
+        
+
+    def forward(self, x):
+        x_norm = (x - self.xyz_mean) / self.xyz_std
+        
+        x_out = self.network_x(x_norm)
+        y_out = self.network_y(x_norm)
+        z_out = self.network_z(x_norm)
+
+        output = torch.cat([x_out, y_out, z_out], dim=1)
+
+        return output
+    

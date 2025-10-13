@@ -48,10 +48,22 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
         spec.loader.exec_module(neuralnets_module)
         NeuralNet = neuralnets_module.NeuralNet
         print('Imported neuralnets from', folder_name)
+        spec_config = importlib.util.spec_from_file_location("config_training", folder_name+"/config_training.py")
+        config_training_module = importlib.util.module_from_spec(spec_config)
+        spec_config.loader.exec_module(config_training_module)
+        training_config = config_training_module.training_config
+        model = NeuralNet(
+                    num_hidden_layers=training_config['num_hidden_layers'],
+                    num_neurons_per_layer=training_config['num_neurons_per_layer'],
+                    xyz_mean=16.1668,
+                    xyz_std=2359.2969,
+                    alt_mean=675.7549,
+                    alt_std=411.4479,
+                    activation=training_config['activation'])
     except:
         from neuralnets import NeuralNet
-
-    model = NeuralNet().to(device)
+        model = NeuralNet().to(device)
+    
     epoch_nb = config.prediction_config['epoch_nb']
     if epoch_nb == None:
         file_name = folder_name+"/models/model.pt"

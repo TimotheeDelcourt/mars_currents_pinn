@@ -5,7 +5,7 @@ import bootstrap_sampling
 import shutil
 from torch import optim
 from training import train, train_noval
-from neuralnets import NeuralNet
+from neuralnets import NeuralNet_indep
 from torch.utils.data import DataLoader, TensorDataset
 
 
@@ -52,28 +52,28 @@ def run_ensemble_training():
     # condition = alt <= 175 #km, only low altitude!
     # new:
     input_xyz = torch.load('data/position_mso.pt')
-    
     input_sph = torch.load('data/position_mso_spherical.pt')
     alt = input_sph[:,0].unsqueeze(1)
-    input = torch.concatenate((input_xyz, alt), dim=1)
+    # input = torch.concatenate((input_xyz, alt), dim=1)
     
     crustal_field_mso = torch.load('data/crustal_field_mso.pt')
     observation_mso = torch.load('data/observation_mso.pt')
     target = observation_mso - crustal_field_mso
 
-    condition = (input[:,3] <= config.training_config['altitude_max']) & torch.any((target <= 30) & (target >= -30), dim=1)
+    condition = (alt <= config.training_config['altitude_max']) & torch.any((target <= 30) & (target >= -30), dim=1)
     # condition = torch.any((target <= 30) & (target >= -30), dim=1)
-    input = input[condition]
+    input = input_xyz[condition]
     target = target[condition]
 
-    xyz_mean = torch.mean(input[:,:3])
-    xyz_std = torch.std(input[:,:3])
-    alt_mean = torch.mean(input[:,3])
-    alt_std = torch.std(input[:,3])
+    xyz_mean = torch.mean(input_xyz)
+    xyz_std = torch.std(input_xyz)
+
+
+    std_params = (xyz_mean, xyz_std)
+    torch.save(std_params, folder_name+'/std_params.pt')
 
     print('Input shape: ', input.shape)
     print('xyz_mean, xyz_std: ', xyz_mean, xyz_std)
-    print('alt_mean, alt_std: ', alt_mean, alt_std)
 
     # Device ---------------------------------------------------
     if torch.cuda.is_available():
@@ -83,15 +83,24 @@ def run_ensemble_training():
     print(f'''Device: {DEVICE}''')
 
     # Load network ---------------------------------------------
-    model = NeuralNet(
+    # model = NeuralNet(
+    #     num_hidden_layers=config.training_config['num_hidden_layers'],
+    #     num_neurons_per_layer=config.training_config['num_neurons_per_layer'],
+    #     xyz_mean=xyz_mean,
+    #     xyz_std=xyz_std,
+    #     alt_mean=alt_mean,
+    #     alt_std=alt_std,
+    #     activation=config.training_config['activation']
+    # ).to(DEVICE)
+
+    model = NeuralNet_indep(
         num_hidden_layers=config.training_config['num_hidden_layers'],
         num_neurons_per_layer=config.training_config['num_neurons_per_layer'],
         xyz_mean=xyz_mean,
         xyz_std=xyz_std,
-        alt_mean=alt_mean,
-        alt_std=alt_std,
         activation=config.training_config['activation']
     ).to(DEVICE)
+
 
     # parameters -------------------------------------------------
     num_epochs = config.training_config['num_epochs']
