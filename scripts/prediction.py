@@ -42,27 +42,28 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
         print('Starting prediction, bootstrap model', k)
 
     # Load the script as a module
-    try:
-        spec = importlib.util.spec_from_file_location("neuralnets", folder_name+"/neuralnets.py")
-        neuralnets_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(neuralnets_module)
-        NeuralNet = neuralnets_module.NeuralNet
-        print('Imported neuralnets from', folder_name)
-        spec_config = importlib.util.spec_from_file_location("config_training", folder_name+"/config_training.py")
-        config_training_module = importlib.util.module_from_spec(spec_config)
-        spec_config.loader.exec_module(config_training_module)
-        training_config = config_training_module.training_config
-        model = NeuralNet(
-                    num_hidden_layers=training_config['num_hidden_layers'],
-                    num_neurons_per_layer=training_config['num_neurons_per_layer'],
-                    xyz_mean=16.1668,
-                    xyz_std=2359.2969,
-                    alt_mean=675.7549,
-                    alt_std=411.4479,
-                    activation=training_config['activation'])
-    except:
-        from neuralnets import NeuralNet
-        model = NeuralNet().to(device)
+    # try:
+    spec = importlib.util.spec_from_file_location("neuralnets", folder_name+"/neuralnets.py")
+    neuralnets_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(neuralnets_module)
+    NeuralNet = neuralnets_module.NeuralNet_indep
+    print('Imported neuralnets from', folder_name)
+    spec_config = importlib.util.spec_from_file_location("config_training", folder_name+"/config_training.py")
+    config_training_module = importlib.util.module_from_spec(spec_config)
+    spec_config.loader.exec_module(config_training_module)
+    training_config = config_training_module.training_config
+    std_params = torch.load(folder_name+'/std_params.pt')
+    model = NeuralNet(
+                num_hidden_layers=training_config['num_hidden_layers'],
+                num_neurons_per_layer=training_config['num_neurons_per_layer'],
+                xyz_mean=std_params[0],
+                xyz_std=std_params[1],
+                # alt_mean=675.7549,
+                # alt_std=411.4479,
+                activation=training_config['activation'])
+    # except:
+    #     from neuralnets import NeuralNet
+    #     model = NeuralNet().to(device)
     
     epoch_nb = config.prediction_config['epoch_nb']
     if epoch_nb == None:
@@ -121,10 +122,9 @@ if __name__ == '__main__':
     if True:
         n = config.prediction_config['num_samples']
         df, input_tensor = utils.fibonacci_sphere(samples = n,   alt = config.prediction_config['alt'])
-        # old
-        alt = torch.ones(len(df))*config.prediction_config['alt']
-        alt = alt.unsqueeze(1)
-        input_tensor = torch.concatenate((input_tensor, alt), dim=1)
+        # alt = torch.ones(len(df))*config.prediction_config['alt']
+        # alt = alt.unsqueeze(1)
+        # input_tensor = torch.concatenate((input_tensor, alt), dim=1)
         B, J = predict(input_tensor)
         # df.drop(columns=['sin_colat','cos_colat','sin_lon','cos_lon','colat'], inplace=True)
         df['Bx'] = B[:,0].to('cpu').detach()

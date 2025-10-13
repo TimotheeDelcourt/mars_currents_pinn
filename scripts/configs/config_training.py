@@ -19,7 +19,7 @@ training_config = {
     'bagging':False,
     'learning_rate': 0.1,
     'altitude_max':1500,
-    'num_hidden_layers':6,
-    'num_neurons_per_layer':40,
+    'num_hidden_layers':1,
+    'num_neurons_per_layer':8,
 }
 

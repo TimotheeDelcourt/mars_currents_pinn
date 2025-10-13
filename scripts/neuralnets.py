@@ -124,37 +124,25 @@ class NeuralNet_indep(nn.Module):
         self.xyz_mean = xyz_mean
         self.xyz_std = xyz_std
 
-        # NN X
-        self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
-                        self.activation)
-        self.hidden_layers =[]
-        for i in np.arange(1,num_hidden_layers):
-            self.hidden_layers.append(nn.Linear(self.num_neurons[i-1], self.num_neurons[i]))
-            self.hidden_layers.append(self.activation)
-        self.output_layer = nn.Linear(self.num_neurons[-1], 1)
-        self.network_x = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
+        self.network_x = self._build_network()
+        self.network_y = self._build_network()
+        self.network_z = self._build_network()
 
-        # NN Y
-        self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
+    def _build_network(self):
+        if self.num_hidden_layers == 1:
+            self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
+                            self.activation)
+            self.output_layer = nn.Linear(self.num_neurons[0], 1)
+            return nn.Sequential(*self.input_layer, self.output_layer)
+        else:
+            self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
                         self.activation)
-        self.hidden_layers =[]
-        for i in np.arange(1,num_hidden_layers):
-            self.hidden_layers.append(nn.Linear(self.num_neurons[i-1], self.num_neurons[i]))
-            self.hidden_layers.append(self.activation)
-        self.output_layer = nn.Linear(self.num_neurons[-1], 1)
-        self.network_y = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
-
-        # NN Z
-        self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
-                        self.activation)
-        self.hidden_layers =[]
-        for i in np.arange(1,num_hidden_layers):
-            self.hidden_layers.append(nn.Linear(self.num_neurons[i-1], self.num_neurons[i]))
-            self.hidden_layers.append(self.activation)
-        self.output_layer = nn.Linear(self.num_neurons[-1], 1)
-        self.network_z = nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
-
-        
+            self.hidden_layers =[]
+            for i in np.arange(1,self.num_hidden_layers):
+                self.hidden_layers.append(nn.Linear(self.num_neurons[i-1], self.num_neurons[i]))
+                self.hidden_layers.append(self.activation)
+            self.output_layer = nn.Linear(self.num_neurons[-1], 1)
+            return nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
 
     def forward(self, x):
         x_norm = (x - self.xyz_mean) / self.xyz_std
