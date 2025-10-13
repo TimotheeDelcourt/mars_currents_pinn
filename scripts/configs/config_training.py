@@ -11,7 +11,8 @@ training_config = {
     'n_cpus': 10,
     'batch_size': 20000,
     # 'num_hidden_layers': 4, NEURAL NET PARAMS IN neuralnets.py !!!
-    'activation': Swish(),#nn.Tanh(),
+    # 'activation': Swish(),
+    'activation': nn.Tanh(),
     # 'lossfn': nn.HuberLoss(delta=7),#nn.MSELoss(),
     'lossfn': nn.MSELoss(),
     # 'ensemble_size': 100,
