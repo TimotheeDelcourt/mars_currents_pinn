@@ -53,14 +53,14 @@ def run_ensemble_training():
     # new:
     input_xyz = torch.load('data/position_mso.pt')
     input_sph = torch.load('data/position_mso_spherical.pt')
-    alt = input_sph[:,0].unsqueeze(1)
+    alt = input_sph[:,0]
     # input = torch.concatenate((input_xyz, alt), dim=1)
     
     crustal_field_mso = torch.load('data/crustal_field_mso.pt')
     observation_mso = torch.load('data/observation_mso.pt')
     target = observation_mso - crustal_field_mso
 
-    condition = (alt <= config.training_config['altitude_max']) & torch.any((target <= 30) & (target >= -30), dim=1)
+    condition = (alt <= config.training_config['altitude_max']) & torch.all((target <= 30) & (target >= -30), dim=1)
     # condition = torch.any((target <= 30) & (target >= -30), dim=1)
     input = input_xyz[condition]
     target = target[condition]
