@@ -125,6 +125,8 @@ def run_ensemble_training():
 
             train_noval(model, train_loader, num_epochs, optimizer, DEVICE,
                         folder_name, n_cpus, lossfn, l1_lambda = l1_lambda)
+            
+        del model
 
 if __name__ == "__main__":
     
