@@ -194,7 +194,7 @@ def train_noval(model, training_loader,
 
 
         if epoch > 30:
-            m, _ = utils.slope(train_loss_hist, 10)
+            m, _ = utils.slope(train_loss_hist, 30)
             if m > -0.001:
                 print('Plateau reached!')
                 break
