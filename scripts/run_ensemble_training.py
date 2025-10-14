@@ -17,7 +17,7 @@ while (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
 def run_ensemble_training():
 
     # Bootstrap iteration---------------------------------------------
-    for l1_lambda in config.training_config['l1_lambda']:
+    for _ in range(config.training_config['ensemble_size']):
 
         print('Making folder')
         # Make folder-------------------------------------------------
@@ -35,7 +35,7 @@ def run_ensemble_training():
                 # If the folder exists, increment the counter and try again
                 counter += 1
 
-        print(f'Training model {counter} corresponding to l1_lambda {l1_lambda}.')
+        # print(f'Training model {counter} corresponding to l1_lambda {l1_lambda}.')
 
         # Save the current config file in the folder----------------
         shutil.copyfile('scripts/configs/config_training.py', folder_name+'/config_training.py')
@@ -56,7 +56,7 @@ def run_ensemble_training():
         input_xyz = torch.load('data/position_mso.pt')
         input_sph = torch.load('data/position_mso_spherical.pt')
         alt = input_sph[:,0]
-        # input = torch.concatenate((input_xyz, alt), dim=1)
+        input = torch.concatenate((input_xyz, alt.unsqueeze(1)), dim=1)
 
         crustal_field_mso = torch.load('data/crustal_field_mso.pt')
         observation_mso = torch.load('data/observation_mso.pt')
@@ -64,18 +64,21 @@ def run_ensemble_training():
 
         condition = (alt <= config.training_config['altitude_max']) & torch.all((target <= 30) & (target >= -30), dim=1)
         # condition = torch.any((target <= 30) & (target >= -30), dim=1)
-        input = input_xyz[condition]
+        input = input[condition]
         target = target[condition]
 
-        xyz_mean = torch.mean(input_xyz)
-        xyz_std = torch.std(input_xyz)
+        xyz_mean = torch.mean(input[:, :3], dim=0)
+        xyz_std = torch.std(input[:, :3], dim=0)
+        alt_mean = torch.mean(alt)
+        alt_std = torch.std(alt)
 
 
-        std_params = (xyz_mean, xyz_std)
+        std_params = (xyz_mean, xyz_std, alt_mean, alt_std)
         torch.save(std_params, folder_name+'/std_params.pt')
 
         print('Input shape: ', input.shape)
         print('xyz_mean, xyz_std: ', xyz_mean, xyz_std)
+        print('alt_mean, alt_std: ', alt_mean, alt_std)
 
         # Device ---------------------------------------------------
         if torch.cuda.is_available():
@@ -100,6 +103,8 @@ def run_ensemble_training():
             num_neurons_per_layer=config.training_config['num_neurons_per_layer'],
             xyz_mean=xyz_mean,
             xyz_std=xyz_std,
+            alt_mean=alt_mean,
+            alt_std=alt_std,
             activation=config.training_config['activation']
         ).to(DEVICE)
 
@@ -124,7 +129,7 @@ def run_ensemble_training():
             train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=n_cpus)
 
             train_noval(model, train_loader, num_epochs, optimizer, DEVICE,
-                        folder_name, n_cpus, lossfn, l1_lambda = l1_lambda)
+                        folder_name, n_cpus, lossfn, l1_lambda = config.training_config['l1_lambda'])
             
         del model
 

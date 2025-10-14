@@ -113,6 +113,8 @@ class NeuralNet_indep(nn.Module):
                 activation,
                 xyz_mean, # km
                 xyz_std, # km
+                alt_mean, # km
+                alt_std, # km
                 ):
         super(NeuralNet_indep, self).__init__()
         # Number of hidden layers 
@@ -123,6 +125,8 @@ class NeuralNet_indep(nn.Module):
         # Standardization parameters
         self.xyz_mean = xyz_mean
         self.xyz_std = xyz_std
+        self.alt_mean = alt_mean
+        self.alt_std = alt_std
 
         self.network_x = self._build_network()
         self.network_y = self._build_network()
@@ -130,12 +134,12 @@ class NeuralNet_indep(nn.Module):
 
     def _build_network(self):
         if self.num_hidden_layers == 1:
-            self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
+            self.input_layer = nn.Sequential(nn.Linear(4, self.num_neurons[0]),
                             self.activation)
             self.output_layer = nn.Linear(self.num_neurons[0], 1)
             return nn.Sequential(*self.input_layer, self.output_layer)
         else:
-            self.input_layer = nn.Sequential(nn.Linear(3, self.num_neurons[0]),
+            self.input_layer = nn.Sequential(nn.Linear(4, self.num_neurons[0]),
                         self.activation)
             self.hidden_layers =[]
             for i in np.arange(1,self.num_hidden_layers):
@@ -145,8 +149,10 @@ class NeuralNet_indep(nn.Module):
             return nn.Sequential(*self.input_layer, *self.hidden_layers, self.output_layer)
 
     def forward(self, x):
-        x_norm = (x - self.xyz_mean) / self.xyz_std
-        
+        xyz_norm = (x[:, :3] - self.xyz_mean) / self.xyz_std
+        alt_norm = (x[:, 3] - self.alt_mean) / self.alt_std
+        x_norm = torch.cat([xyz_norm, alt_norm.unsqueeze(1)], dim=1)
+
         x_out = self.network_x(x_norm)
         y_out = self.network_y(x_norm)
         z_out = self.network_z(x_norm)

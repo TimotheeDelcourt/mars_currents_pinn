@@ -1,7 +1,7 @@
 
 
 map_config = {
-    'model_name' : 'PINN_MSO_model27_epochlast_150km_fibonacci',
+    'model_name' : 'PINN_MSO_model31_epochlast_150km_fibonacci',
     'shading': False, # True or False
     'proj':'central', # north,south, or central
     'filetype': '.png',
