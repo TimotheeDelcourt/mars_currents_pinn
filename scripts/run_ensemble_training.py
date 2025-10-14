@@ -69,10 +69,10 @@ def run_ensemble_training():
         input = input[condition]
         target = target[condition]
 
-        xyz_mean = torch.mean(input[:, :3], dim=0)
-        xyz_std = torch.std(input[:, :3], dim=0)
-        alt_mean = torch.mean(alt)
-        alt_std = torch.std(alt)
+        xyz_mean = torch.mean(input[:, :3])
+        xyz_std = torch.std(input[:, :3])
+        alt_mean = torch.mean(input[:, 3])
+        alt_std = torch.std(input[:, 3])
 
 
         std_params = (xyz_mean, xyz_std, alt_mean, alt_std)
