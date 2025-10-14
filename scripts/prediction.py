@@ -65,10 +65,6 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
     #     from neuralnets import NeuralNet
     #     model = NeuralNet().to(device)
 
-    # l1 = sum(p.abs().sum() for p in model.parameters()).item()
-    # print(l1)
-    # assert 1 == 0
-    
     epoch_nb = config.prediction_config['epoch_nb']
     if epoch_nb == None:
         file_name = folder_name+"/models/model.pt"
@@ -77,6 +73,10 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
     network = torch.load(file_name, map_location=device)
     # network = {k: v.to(device) for k, v in network.items()}
     model.load_state_dict(network)
+
+    # l1 = sum(p.abs().sum() for p in model.parameters()).item()
+    # print(l1)
+    # assert 1 == 0
 
     # Predict --------------------------------------------------
     if minibatch == 0:
