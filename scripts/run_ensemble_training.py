@@ -7,6 +7,8 @@ from torch import optim
 from training import train, train_noval
 from neuralnets import NeuralNet_indep
 from torch.utils.data import DataLoader, TensorDataset
+import numpy as np
+import random
 
 
 while (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
@@ -98,9 +100,13 @@ def run_ensemble_training():
         #     activation=config.training_config['activation']
         # ).to(DEVICE)
 
+        num_hidden_layers=config.training_config['num_hidden_layers']
+        num_neurons_per_layer=np.random.randint(7,11)
+        print('num_neurons_per_layer: ', num_neurons_per_layer)
+
         model = NeuralNet_indep(
-            num_hidden_layers=config.training_config['num_hidden_layers'],
-            num_neurons_per_layer=config.training_config['num_neurons_per_layer'],
+            num_hidden_layers=num_hidden_layers,
+            num_neurons_per_layer=num_neurons_per_layer,
             xyz_mean=xyz_mean,
             xyz_std=xyz_std,
             alt_mean=alt_mean,
