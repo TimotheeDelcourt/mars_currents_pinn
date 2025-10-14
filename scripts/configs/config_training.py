@@ -22,7 +22,7 @@ training_config = {
     'altitude_max':1500,
     'num_hidden_layers':1,
     'num_neurons_per_layer':8,
-    'l1_lambda':[1e-6,1e-5,1e-4,1e-3],
-    # 'l1_lambda':[1e-2,1e-1,1   ,10],
+    # 'l1_lambda':[1e-6,1e-5,1e-4,1e-3],
+    'l1_lambda':[1e-2,1e-1,1   ,10],
 }
 
