@@ -11,7 +11,7 @@ prediction_config = {
     'num_samples': 900000, # fibonnaci_sphere
     'bootstrap_max': None, # if predict_ensemble = 1
     'bootstrap_nb':None, # predict_single_model = 1
-    'model_nb':23,
+    'model_nb':36,
     'epoch_nb':None, # None = last epoch
     'alt': 150, # only used if input_type is 'fibonacci_sphere', Gao: 150 or 250 km
     'num_workers': 8,

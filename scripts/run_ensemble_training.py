@@ -40,7 +40,7 @@ def run_ensemble_training():
         # print(f'Training model {counter} corresponding to l1_lambda {l1_lambda}.')
 
         # Save the current config file in the folder----------------
-        shutil.copyfile('scripts/configs/config_training.py', folder_name+'/config_training.py')
+        
         # and training script
         shutil.copyfile('scripts/training.py', folder_name+'/training.py')
         shutil.copyfile('scripts/neuralnets.py', folder_name+'/neuralnets.py')
@@ -101,8 +101,13 @@ def run_ensemble_training():
         # ).to(DEVICE)
 
         num_hidden_layers=config.training_config['num_hidden_layers']
-        num_neurons_per_layer=np.random.randint(7,11)
-        print('num_neurons_per_layer: ', num_neurons_per_layer)
+        num_neurons_per_layer=config.training_config['num_neurons_per_layer']
+        # num_neurons_per_layer=np.random.randint(7,11)
+        # print('num_neurons_per_layer: ', num_neurons_per_layer)
+        # modify config file and save in folder
+        # config.training_config['num_neurons_per_layer'] = num_neurons_per_layer
+
+        shutil.copyfile('scripts/configs/config_training.py', folder_name+'/config_training.py')
 
         model = NeuralNet_indep(
             num_hidden_layers=num_hidden_layers,

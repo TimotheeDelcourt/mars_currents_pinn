@@ -55,11 +55,11 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
     std_params = torch.load(folder_name+'/std_params.pt')
     model = NeuralNet(
                 num_hidden_layers=training_config['num_hidden_layers'],
-                num_neurons_per_layer=training_config['num_neurons_per_layer'],
+                num_neurons_per_layer=10,#training_config['num_neurons_per_layer'],
                 xyz_mean=std_params[0],
                 xyz_std=std_params[1],
-                # alt_mean=675.7549,
-                # alt_std=411.4479,
+                alt_mean=std_params[2],
+                alt_std=std_params[3],
                 activation=training_config['activation'])
     # except:
     #     from neuralnets import NeuralNet
@@ -126,9 +126,9 @@ if __name__ == '__main__':
     if True:
         n = config.prediction_config['num_samples']
         df, input_tensor = utils.fibonacci_sphere(samples = n,   alt = config.prediction_config['alt'])
-        # alt = torch.ones(len(df))*config.prediction_config['alt']
-        # alt = alt.unsqueeze(1)
-        # input_tensor = torch.concatenate((input_tensor, alt), dim=1)
+        alt = torch.ones(len(df))*config.prediction_config['alt']
+        alt = alt.unsqueeze(1)
+        input_tensor = torch.concatenate((input_tensor, alt), dim=1)
         B, J = predict(input_tensor)
         # df.drop(columns=['sin_colat','cos_colat','sin_lon','cos_lon','colat'], inplace=True)
         df['Bx'] = B[:,0].to('cpu').detach()
