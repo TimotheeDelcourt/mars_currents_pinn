@@ -15,7 +15,6 @@ def train(model, training_loader, validation_loader,
           num_epochs, optimizer, device, folder_name, 
           n_cpus, lossfn, l1_lambda = 0):
     
-
     training_loader_size = len(training_loader)
     torch.set_num_threads(n_cpus)
     train_loss_hist = []
@@ -86,6 +85,7 @@ def train(model, training_loader, validation_loader,
         torch.save(model.state_dict(), os.path.join(folder_name+'/models/', f'model.pt'))
         if validation_loss < val_loss_min:
             torch.save(model.state_dict(), os.path.join(folder_name+'/models/', f'model_val_min.pt'))
+            val_loss_min = validation_loss
 
         if epoch>0:
             fig, axs=plt.subplots(1,2, figsize=(12,4))
