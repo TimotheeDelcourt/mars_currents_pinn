@@ -147,8 +147,8 @@ if __name__ == "__main__":
             train_loader, val_loader = bootstrap_sampling.prepare_bootstrap_dataloaders(input, target, orbit_nb, 
                                                                                     batch_size,
                                                                                     n_cpus,
-                                                                                    config.training_config['sample_with_replacement'],
                                                                                     device=DEVICE,
+                                                                                    replacement=config.training_config['sample_with_replacement'],
                                                                                     )
             
             # assert 1 == 0, "Debugging stop"
