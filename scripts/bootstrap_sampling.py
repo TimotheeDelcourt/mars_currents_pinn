@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 
 
 
-def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus, replacement = True):
+def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus, device, replacement = True):
     
     # Sample orbit -> return matching data indices -----------------------------
     nb_unique = torch.unique(nb_all)
@@ -21,7 +21,9 @@ def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus, repla
         nb_train = torch.tensor(nb_train, dtype=int)
         print('Sampled orbits / total orbits: ', len(nb_train)/len(nb_unique)) #check
 
-    
+    if device != 'cpu':
+        nb_train = nb_train.to(device)
+        nb_all = nb_all.to(device)
 
     train_indices = []
     # progress_old = -1

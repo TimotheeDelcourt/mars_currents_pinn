@@ -16,7 +16,8 @@ while (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
     
 
 
-def run_ensemble_training():
+# def run_ensemble_training():
+if __name__ == "__main__":
 
     # Bootstrap iteration---------------------------------------------
     for _ in range(config.training_config['ensemble_size']):
@@ -146,7 +147,8 @@ def run_ensemble_training():
             train_loader, val_loader = bootstrap_sampling.prepare_bootstrap_dataloaders(input, target, orbit_nb, 
                                                                                     batch_size,
                                                                                     n_cpus,
-                                                                                    config.training_config['sample_with_replacement']
+                                                                                    config.training_config['sample_with_replacement'],
+                                                                                    device=DEVICE,
                                                                                     )
             
             # assert 1 == 0, "Debugging stop"
@@ -161,9 +163,9 @@ def run_ensemble_training():
             
         del model
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     
-    run_ensemble_training()
+    # run_ensemble_training()
 
 
         
