@@ -10,19 +10,27 @@ training_config = {
     'num_epochs': 20000,
     'n_cpus': 10,
     'batch_size': 20000,
-    # 'activation': Swish(),
-    # 'activation': nn.Tanh(),
+    'activation': nn.Tanh(),
     # 'activation': nn.Softplus(),
-    'activation': nn.GELU(),
+    # 'activation': nn.GELU(),
+    # 'activation': Swish(),
     'lossfn': nn.MSELoss(),
-    'ensemble_size': 1,
+    'ensemble_size': 200,
     'bootstrap_counter_start': 1,
-    'bagging':False,
+    'validation':True,
     'learning_rate': 0.1,
-    'altitude_max':1500,
     'num_hidden_layers':1,
+    'random_parameters':True, # including alt as input
+    'sample_with_replacement':False,
+
+    # pre-determined parameters
+    'altitude_max':1500,
     'num_neurons_per_layer':8,
-    # 'l1_lambda':[1e-6,1e-5,1e-4,1e-3],
     'l1_lambda':0,
+
+    # randomly selected parameters
+    'l1_lambdas':[0, 0, 1e-7,1e-6,5*1e-6],
+    'altitudes_max':[200,1500],
+    'nums_neurons_per_layer':[7,16],
 }
 

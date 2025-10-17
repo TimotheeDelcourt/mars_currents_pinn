@@ -24,7 +24,7 @@ def run_ensemble_training():
         print('Making folder')
         # Make folder-------------------------------------------------
         counter = config.training_config['bootstrap_counter_start']
-        base_folder_name = 'models/PINN_ext_model_'
+        base_folder_name = 'models/TEST_PINN_ext_model_'
         # Keep creating new folders with incremented names until one with a unique name is found
         while True:
             folder_name = base_folder_name+str(counter)
@@ -45,42 +45,74 @@ def run_ensemble_training():
         shutil.copyfile('scripts/training.py', folder_name+'/training.py')
         shutil.copyfile('scripts/neuralnets.py', folder_name+'/neuralnets.py')
         shutil.copyfile('scripts/run_ensemble_training.py', folder_name+'/run_ensemble_training.py')
+        shutil.copyfile('scripts/configs/config_training.py', folder_name+'/config_training.py')
         os.makedirs(folder_name+'/models/')
-
 
         # Load and sample datasets ----------------------------------
         print('Loading data')
-        # old:
-        # input = torch.load('data/position_mso.pt')
-        # alt = torch.load('data/position_pc.pt')[:,0]
-        # condition = alt <= 175 #km, only low altitude!
-        # new:
         input_xyz = torch.load('data/position_mso.pt')
         input_sph = torch.load('data/position_mso_spherical.pt')
         alt = input_sph[:,0]
-        input = torch.concatenate((input_xyz, alt.unsqueeze(1)), dim=1)
-
+        
         crustal_field_mso = torch.load('data/crustal_field_mso.pt')
         observation_mso = torch.load('data/observation_mso.pt')
         target = observation_mso - crustal_field_mso
 
-        condition = (alt <= config.training_config['altitude_max']) & torch.all((target <= 30) & (target >= -30), dim=1)
-        # condition = torch.any((target <= 30) & (target >= -30), dim=1)
-        input = input[condition]
+        if config.training_config['random_parameters'] == False:
+            num_neurons_per_layer=config.training_config['num_neurons_per_layer']
+            alt_max = config.training_config['altitude_max']
+            l1_lambda = config.training_config['l1_lambda']
+            include_alt = True
+        elif config.training_config['random_parameters'] == True:
+            include_alt = np.random.choice([True,False])
+            alt_max = np.random.randint(config.training_config['altitudes_max'][0], config.training_config['altitudes_max'][1]+1)
+            l1_lambda = np.random.choice(config.training_config['l1_lambdas'])
+            num_neurons_per_layer = np.random.randint(config.training_config['nums_neurons_per_layer'][0], config.training_config['nums_neurons_per_layer'][1]+1)
+
+        print(f'Altitude max: {alt_max} km')
+        print(f'Number of neurons per layer: {num_neurons_per_layer}')
+        print(f'L1 lambda: {l1_lambda}')
+        print(f'Include altitude: {include_alt}')
+
+        condition = (alt <= alt_max) & torch.all((target <= 60) & (target >= -60), dim=1)
         target = target[condition]
 
-        xyz_mean = torch.mean(input[:, :3])
-        xyz_std = torch.std(input[:, :3])
-        alt_mean = torch.mean(input[:, 3])
-        alt_std = torch.std(input[:, 3])
+        if include_alt == True:
+            input = torch.concatenate((input_xyz, alt.unsqueeze(1)), dim=1)
+            input = input[condition]
+            num_inputs = 4
+            alt_mean = torch.mean(input[:, 3]).item()
+            alt_std = torch.std(input[:, 3]).item()
+            print('alt_mean, alt_std: ', alt_mean, alt_std)
+        else:
+            input = input_xyz
+            input = input[condition]
+            num_inputs = 3
+            alt_mean = None
+            alt_std = None
 
 
-        std_params = (xyz_mean, xyz_std, alt_mean, alt_std)
-        torch.save(std_params, folder_name+'/std_params.pt')
+        xyz_mean = 0#torch.mean(input[:, :3])
+        xyz_std = torch.std(input[:, :3]).item()
+        
+        model_params = {
+            'xyz_mean': xyz_mean,
+            'xyz_std': xyz_std,
+            'alt_mean': alt_mean,
+            'alt_std': alt_std,
+            'num_inputs': num_inputs,
+            'l1_lambda': l1_lambda,
+            'num_neurons_per_layer': num_neurons_per_layer,
+            'alt_max': alt_max,
+        }
 
+        np.save(folder_name+'/model_params.npy', model_params)
+
+        # std_params = (xyz_mean, xyz_std, alt_mean, alt_std)
+        # torch.save(std_params, folder_name+'/std_params.pt')
         print('Input shape: ', input.shape)
-        print('xyz_mean, xyz_std: ', xyz_mean, xyz_std)
-        print('alt_mean, alt_std: ', alt_mean, alt_std)
+        # print('xyz_mean, xyz_std: ', xyz_mean, xyz_std)
+        # print('alt_mean, alt_std: ', alt_mean, alt_std)
 
         # Device ---------------------------------------------------
         if torch.cuda.is_available():
@@ -90,35 +122,17 @@ def run_ensemble_training():
         print(f'''Device: {DEVICE}''')
 
         # Load network ---------------------------------------------
-        # model = NeuralNet(
-        #     num_hidden_layers=config.training_config['num_hidden_layers'],
-        #     num_neurons_per_layer=config.training_config['num_neurons_per_layer'],
-        #     xyz_mean=xyz_mean,
-        #     xyz_std=xyz_std,
-        #     alt_mean=alt_mean,
-        #     alt_std=alt_std,
-        #     activation=config.training_config['activation']
-        # ).to(DEVICE)
-
-        num_hidden_layers=config.training_config['num_hidden_layers']
-        num_neurons_per_layer=config.training_config['num_neurons_per_layer']
-        # num_neurons_per_layer=np.random.randint(7,11)
-        # print('num_neurons_per_layer: ', num_neurons_per_layer)
-        # modify config file and save in folder
-        # config.training_config['num_neurons_per_layer'] = num_neurons_per_layer
-
-        shutil.copyfile('scripts/configs/config_training.py', folder_name+'/config_training.py')
 
         model = NeuralNet_indep(
-            num_hidden_layers=num_hidden_layers,
+            num_hidden_layers=config.training_config['num_hidden_layers'],
             num_neurons_per_layer=num_neurons_per_layer,
             xyz_mean=xyz_mean,
             xyz_std=xyz_std,
+            num_inputs=num_inputs,
             alt_mean=alt_mean,
             alt_std=alt_std,
             activation=config.training_config['activation']
         ).to(DEVICE)
-
 
         # parameters -------------------------------------------------
         num_epochs = config.training_config['num_epochs']
@@ -127,14 +141,17 @@ def run_ensemble_training():
         lossfn = config.training_config['lossfn']
         batch_size = config.training_config['batch_size']
 
-        if config.training_config['bagging']:
+        if config.training_config['validation']:
             orbit_nb = torch.load('data/orbit_nb.pt')
             train_loader, val_loader = bootstrap_sampling.prepare_bootstrap_dataloaders(input, target, orbit_nb, 
                                                                                     batch_size,
                                                                                     n_cpus,
+                                                                                    config.training_config['sample_with_replacement']
                                                                                     )
+            
+            # assert 1 == 0, "Debugging stop"
             train(model,train_loader,val_loader, num_epochs, optimizer, DEVICE,
-                folder_name, n_cpus, lossfn)
+                folder_name, n_cpus, lossfn, l1_lambda=l1_lambda)
         else:
             train_dataset = TensorDataset(input, target)
             train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=n_cpus)

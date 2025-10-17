@@ -15,31 +15,37 @@ if torch.cuda.is_available():
     device = torch.device('cuda')
 else:
     device = 'cpu'
-print('Working on device: ', device)
+# print('Working on device: ', device)
 
 # while os.path.basename(os.getcwd()) != 'project':
 #     os.chdir('../')
+
+def generate_input():
+    n = config.prediction_config['num_samples']
+    df, input_tensor = utils.fibonacci_sphere(samples = n,   alt = config.prediction_config['alt'])
+    alt = torch.ones(len(df))*config.prediction_config['alt']
+    alt = alt.unsqueeze(1)
+    input_tensor = torch.concatenate((input_tensor, alt), dim=1)
+    return df, input_tensor
  
 
-def predict(input, minibatch=config.prediction_config['minibatch']):
+def predict(input, k , minibatch=config.prediction_config['minibatch']):
     '''
     Input must be a torch tensor of shape (n,4) with columns: X,Y,Z [km], alt [km]
     k: int, number of the bootstrap model to use.
     Output: tuple of (1) torch tensor of shape (n,3) with columns: Bx, By, Bz [nT]; (2) torch tensor of shape (n,3) with columns: Jx, Jy, Jz [mA/m2]
     device = GPU if minibatch = 0, else CPU.
     '''
-    
-    
- 
+     
     # Load model -----------------------------------------------
-    if config.prediction_config['bootstrap_nb'] is None:
-        k = config.prediction_config['model_nb']
-        folder_name = 'models/PINN_ext_model_'+str(k)
-        print('Starting prediction, model', k)
-    else:
-        k = config.prediction_config['bootstrap_nb']
-        folder_name = 'models/PINN_ext_bootstrap_'+str(k)
-        print('Starting prediction, bootstrap model', k)
+    # if config.prediction_config['bootstrap_nb'] is None:
+    #     k = config.prediction_config['model_nb']
+    folder_name = 'models/PINN_ext_model_'+str(k)
+    #     print('Starting prediction, model', k)
+    # else:
+    #     k = config.prediction_config['bootstrap_nb']
+    #     folder_name = 'models/PINN_ext_bootstrap_'+str(k)
+    #     print('Starting prediction, bootstrap model', k)
 
     # Load the script as a module
     # try:
@@ -53,30 +59,33 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
     spec_config.loader.exec_module(config_training_module)
     training_config = config_training_module.training_config
     std_params = torch.load(folder_name+'/std_params.pt')
-    model = NeuralNet(
-                num_hidden_layers=training_config['num_hidden_layers'],
-                num_neurons_per_layer=10,#training_config['num_neurons_per_layer'],
-                xyz_mean=std_params[0],
-                xyz_std=std_params[1],
-                alt_mean=std_params[2],
-                alt_std=std_params[3],
-                activation=training_config['activation'])
-    # except:
-    #     from neuralnets import NeuralNet
-    #     model = NeuralNet().to(device)
+    # troubleshoot -------------------------------------------------------------------
+    # (that's because the randomly selected num_neurons_per_layer were not recorded)
+    for num_neurons_per_layer in range(7,11):
+        try:
+            model = NeuralNet(
+                        num_hidden_layers=1,#training_config['num_hidden_layers'],
+                        num_neurons_per_layer=num_neurons_per_layer,#training_config['num_neurons_per_layer'],
+                        xyz_mean=std_params[0],
+                        xyz_std=std_params[1],
+                        alt_mean=std_params[2],
+                        alt_std=std_params[3],
+                        activation=training_config['activation'])
+            file_name = folder_name+"/models/model.pt"
+            network = torch.load(file_name, map_location=device)
+            model.load_state_dict(network)
+            break
+        except:
+            continue
+    # ---------------------------------------------------------------------------------
 
-    epoch_nb = config.prediction_config['epoch_nb']
-    if epoch_nb == None:
-        file_name = folder_name+"/models/model.pt"
-    else:
-        file_name = folder_name+f"/models/model{epoch_nb}.pt"
-    network = torch.load(file_name, map_location=device)
-    # network = {k: v.to(device) for k, v in network.items()}
-    model.load_state_dict(network)
-
-    # l1 = sum(p.abs().sum() for p in model.parameters()).item()
-    # print(l1)
-    # assert 1 == 0
+    # epoch_nb = config.prediction_config['epoch_nb']
+    # if epoch_nb == None:
+    #     file_name = folder_name+"/models/model.pt"
+    # else:
+    #     file_name = folder_name+f"/models/model{epoch_nb}.pt"
+    # network = torch.load(file_name, map_location=device)
+    # model.load_state_dict(network)
 
     # Predict --------------------------------------------------
     if minibatch == 0:
@@ -111,6 +120,114 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
 
     return (B_pred, J_pred)
     
+def predict_ensemble():
+    df, input_tensor = generate_input()
+
+    k_start = config.prediction_config['models_start_stop'][0]
+    k_stop  = config.prediction_config['models_start_stop'][1]
+
+    B_sum = None
+    B_sum_sq = None
+    J_sum = None  
+    J_sum_sq = None
+    n_models = k_stop - k_start + 1
+
+    for i, model in enumerate(range(k_start, k_stop+1)):
+        B, J = predict(input_tensor, model)
+        
+        if B_sum is None:
+            B_sum = B.clone()
+            B_sum_sq = B.pow(2)
+            J_sum = J.clone()
+            J_sum_sq = J.pow(2)
+        else:
+            B_sum += B
+            B_sum_sq += B.pow(2)
+            J_sum += J
+            J_sum_sq += J.pow(2)
+
+    # Calculate statistics
+    B_mean = B_sum / n_models
+    B_std = torch.sqrt((B_sum_sq / n_models) - B_mean.pow(2))
+    J_mean = J_sum / n_models  
+    J_std = torch.sqrt((J_sum_sq / n_models) - J_mean.pow(2))
+
+    df['Bx'] = B_mean[:,0]
+    df['By'] = B_mean[:,1]
+    df['Bz'] = B_mean[:,2]
+    df['Jx'] = J_mean[:,0]
+    df['Jy'] = J_mean[:,1]
+    df['Jz'] = J_mean[:,2]
+
+    df['Bx_std'] = B_std[:,0]
+    df['By_std'] = B_std[:,1]
+    df['Bz_std'] = B_std[:,2]
+    df['Jx_std'] = J_std[:,0]
+    df['Jy_std'] = J_std[:,1]
+    df['Jz_std'] = J_std[:,2]
+
+    Br, Bt, Bp = utils.field_cart_to_spher(B_mean[:,0], B_mean[:,1], B_mean[:,2],
+                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+    df['Br'] = Br
+    df['Bt'] = Bt
+    df['Bp'] = Bp
+    del Br, Bt, Bp
+    
+    Jr, Jt, Jp = utils.field_cart_to_spher(J_mean[:,0], J_mean[:,1], J_mean[:,2],
+                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+    df['Jr'] = Jr
+    df['Jt'] = Jt
+    df['Jp'] = Jp
+    del Jr, Jt, Jp
+
+    Br_std, Bt_std, Bp_std = utils.field_cart_to_spher(B_std[:,0], B_std[:,1], B_std[:,2],
+                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+    df['Br_std'] = Br_std
+    df['Bt_std'] = Bt_std
+    df['Bp_std'] = Bp_std
+    del Br_std, Bt_std, Bp_std
+    
+    Jr_std, Jt_std, Jp_std = utils.field_cart_to_spher(J_std[:,0], J_std[:,1], J_std[:,2],
+                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+    df['Jr_std'] = Jr_std
+    df['Jt_std'] = Jt_std
+    df['Jp_std'] = Jp_std
+    del Jr_std, Jt_std, Jp_std
+
+    df.to_csv(f"predictions/PINN_MSO_ensemble_model{k_start}to{k_stop}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+
+    print(df)
+
+def predict_single():
+    df, input_tensor = generate_input()
+
+    B, J = predict(input_tensor, k = config.prediction_config['model_nb'])
+    df['Bx'] = B[:,0].to('cpu').detach()
+    df['By'] = B[:,1].to('cpu').detach()
+    df['Bz'] = B[:,2].to('cpu').detach()
+    df['Jx'] = J[:,0].to('cpu').detach()
+    df['Jy'] = J[:,1].to('cpu').detach()
+    df['Jz'] = J[:,2].to('cpu').detach()
+    Br, Bt, Bp = utils.field_cart_to_spher(B[:,0], B[:,1], B[:,2],
+                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+    Jr, Jt, Jp = utils.field_cart_to_spher(J[:,0], J[:,1], J[:,2],
+                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+    df['Br'] = Br.to('cpu').detach()
+    df['Bt'] = Bt.to('cpu').detach()
+    df['Bp'] = Bp.to('cpu').detach()
+    df['Jr'] = Jr.to('cpu').detach()
+    df['Jt'] = Jt.to('cpu').detach()
+    df['Jp'] = Jp.to('cpu').detach()
+    
+    epoch_nb = config.prediction_config['epoch_nb']
+    if epoch_nb == None:
+        epoch_nb = 'last'
+
+    df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_epoch{epoch_nb}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+    
+    print(df)
+
+
 
 
 
@@ -119,41 +236,8 @@ def predict(input, minibatch=config.prediction_config['minibatch']):
 if __name__ == '__main__':
 
   
-    # if config.predict_ensemble:
-    #     ensemble_predict()
-    
-    # if config.predict_single_model:
-    if True:
-        n = config.prediction_config['num_samples']
-        df, input_tensor = utils.fibonacci_sphere(samples = n,   alt = config.prediction_config['alt'])
-        alt = torch.ones(len(df))*config.prediction_config['alt']
-        alt = alt.unsqueeze(1)
-        input_tensor = torch.concatenate((input_tensor, alt), dim=1)
-        B, J = predict(input_tensor)
-        # df.drop(columns=['sin_colat','cos_colat','sin_lon','cos_lon','colat'], inplace=True)
-        df['Bx'] = B[:,0].to('cpu').detach()
-        df['By'] = B[:,1].to('cpu').detach()
-        df['Bz'] = B[:,2].to('cpu').detach()
-        df['Jx'] = J[:,0].to('cpu').detach()
-        df['Jy'] = J[:,1].to('cpu').detach()
-        df['Jz'] = J[:,2].to('cpu').detach()
-        Br, Bt, Bp = utils.field_cart_to_spher(B[:,0], B[:,1], B[:,2],
-                                            lat_deg = df['lat'], lon_deg = df['lon'], device = device)
-        Jr, Jt, Jp = utils.field_cart_to_spher(J[:,0], J[:,1], J[:,2],
-                                            lat_deg = df['lat'], lon_deg = df['lon'], device = device)
-        df['Br'] = Br.to('cpu').detach()
-        df['Bt'] = Bt.to('cpu').detach()
-        df['Bp'] = Bp.to('cpu').detach()
-        df['Jr'] = Jr.to('cpu').detach()
-        df['Jt'] = Jt.to('cpu').detach()
-        df['Jp'] = Jp.to('cpu').detach()
-        
+    if config.predict_ensemble:
+        predict_ensemble()
 
-        epoch_nb = config.prediction_config['epoch_nb']
-        if epoch_nb == None:
-            epoch_nb = 'last'
-
-        df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_epoch{epoch_nb}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
-       
-        
-        print(df)
+    if config.predict_single_model:
+        predict_single()

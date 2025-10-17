@@ -13,26 +13,23 @@ warnings.filterwarnings("ignore")
 
 def train(model, training_loader, validation_loader,  
           num_epochs, optimizer, device, folder_name, 
-          n_cpus, lossfn):
+          n_cpus, lossfn, l1_lambda = 0):
     
 
     training_loader_size = len(training_loader)
     torch.set_num_threads(n_cpus)
     train_loss_hist = []
     val_loss_hist = []
-    # pbar = trange(num_epochs)
-    # scheduler_bool = 0
-    # epoch_scheduler = 9999999
-
-    # initial lr
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = 1e-3
+    val_loss_min = 9999
+    if l1_lambda != 0:
+        l1_hist = []
 
     # for epoch in pbar:
     for epoch in range(num_epochs):
 
         running_loss = 0.0
         running_val_loss = 0.0
+        running_l1 = 0.0
 
         for (x_train, y_train) in training_loader:
             
@@ -45,6 +42,11 @@ def train(model, training_loader, validation_loader,
 
             loss = lossfn(y_pred, y_train)
             running_loss += loss.item()
+
+            if l1_lambda != 0:
+                l1 = sum(p.abs().sum() for p in model.parameters())
+                running_l1 += l1.item()
+                loss += l1_lambda*l1
             
             optimizer.zero_grad()
             loss.backward()
@@ -66,7 +68,6 @@ def train(model, training_loader, validation_loader,
             A_pred = model(x_test)
             y_pred = curl_differentiable(x_test, A_pred)
 
-
             with torch.no_grad():
                 val_loss = lossfn(y_pred, y_test)
                 n = len(y_test)
@@ -78,7 +79,13 @@ def train(model, training_loader, validation_loader,
         
         np.save(folder_name+'/val_loss_hist.npy', val_loss_hist)
         np.save(folder_name+'/training_history.npy', train_loss_hist)
-        torch.save(model.state_dict(), os.path.join(folder_name, f'model{epoch}.pt'))
+        if l1_lambda != 0:
+            l1_hist.append(running_l1/training_loader_size)
+            np.save(folder_name+'/l1_history.npy', l1_hist)
+
+        torch.save(model.state_dict(), os.path.join(folder_name+'/models/', f'model.pt'))
+        if validation_loss < val_loss_min:
+            torch.save(model.state_dict(), os.path.join(folder_name+'/models/', f'model_val_min.pt'))
 
         if epoch>0:
             fig, axs=plt.subplots(1,2, figsize=(12,4))
@@ -97,27 +104,11 @@ def train(model, training_loader, validation_loader,
             plt.close()
             
       
-        # pbar.set_postfix_str(f'''Epoch {epoch}, Loss: {total_loss}, Validation Loss: {validation_loss}, lr: {optimizer.param_groups[0]['lr']}''')#{torch.sqrt(laplacian_loss/soft_con_weight)}''')  , Laplacian Loss: {laplacian_loss}
-        # print("", end="", flush=True)  # Force flushing the output
-
-        # if epoch>300:
-        #     last200 = val_loss_hist[-200:]
-        #     smooth = pd.DataFrame(last200).rolling(10,center=True).mean()
-        #     plt.plot(last200,color='black')
-        #     plt.plot(smooth,color='blue',linewidth=2)
-        #     plt.savefig(os.path.join(folder_name, 'losses_zoom.png'))
-        #     plt.close()
-        #     m, _ = utils.slope(val_loss_hist, 200)
-           
-        #     if (m >= -1.6e-6) & (scheduler_bool == 0):
-        #         scheduler_bool = 1
-        #         epoch_scheduler = epoch
-        #         for param_group in optimizer.param_groups:
-        #             param_group['lr'] = 1e-4
-
-        #     elif (epoch > epoch_scheduler + 200) & (m >= -1e-9) & (val_loss_hist[-1] < val_loss_hist[-2]) & (val_loss_hist[-1] < val_loss_hist[-3]) & (val_loss_hist[-1] < val_loss_hist[-4]):
-        #         print('Plateau reached!')
-        #         break
+        if epoch > 30:
+            m, _ = utils.slope(train_loss_hist, 30)
+            if m > -0.001:
+                print('Plateau reached!')
+                break
 
 
 def train_noval(model, training_loader, 
