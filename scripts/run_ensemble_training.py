@@ -151,7 +151,7 @@ def run_ensemble_training():
                                                                                     replacement=config.training_config['sample_with_replacement'],
                                                                                     )
             
-            assert 1 == 0, "Debugging stop"
+            # assert 1 == 0, "Debugging stop"
             train(model,train_loader,val_loader, num_epochs, optimizer, DEVICE,
                 folder_name, n_cpus, lossfn, l1_lambda=l1_lambda)
         else:
