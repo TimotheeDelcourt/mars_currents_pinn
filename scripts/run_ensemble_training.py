@@ -148,7 +148,6 @@ def run_ensemble_training():
             train_loader, val_loader = bootstrap_sampling.prepare_bootstrap_dataloaders(input, target, orbit_nb, 
                                                                                     batch_size,
                                                                                     n_cpus,
-                                                                                    device=DEVICE,
                                                                                     replacement=config.training_config['sample_with_replacement'],
                                                                                     )
             

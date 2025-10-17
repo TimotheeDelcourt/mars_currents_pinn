@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 
 
-def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus, device, replacement = True):
+def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus, replacement = True):
     
     # Sample orbit -> return matching data indices -----------------------------
     nb_unique = torch.unique(nb_all)
@@ -20,9 +20,6 @@ def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus, devic
         nb_train = torch.tensor(nb_train, dtype=int)
         print('Sampled orbits / total orbits: ', len(nb_train)/len(nb_unique)) #check
 
-    if device != 'cpu':
-        nb_train = nb_train.to(device)
-        nb_all = nb_all.to(device)
 
     train_mask = torch.isin(nb_all, nb_train)
     train_indices = torch.nonzero(train_mask, as_tuple=False).squeeze(-1)
@@ -30,24 +27,6 @@ def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus, devic
     val_mask = ~train_mask  # Invert mask for validation
     val_indices = torch.nonzero(val_mask, as_tuple=False).squeeze(-1)
 
-    # if train_indices.dim() == 0:
-    #     train_indices = train_indices.unsqueeze(0)
-    # if val_indices.dim() == 0:
-    #     val_indices = val_indices.unsqueeze(0)
-
-    # train_indices = []
-    # # progress_old = -1
-    # for i,nb in enumerate(nb_train):
-    #     cond = torch.isin(elements=nb_all,test_element=nb)
-    #     nb_indices = torch.nonzero(cond).squeeze().tolist()
-    #     if isinstance(nb_indices,int):
-    #         train_indices.append(nb_indices)
-    #     else:
-    #         train_indices.extend(nb_indices)
-
-    train_indices = torch.tensor(train_indices, dtype=int)
-    val_indices_bool = torch.isin(elements=nb_all, test_elements=nb_train, invert=True)
-    val_indices = torch.nonzero(val_indices_bool).squeeze()
 
     # Retrieve corresponding data ----------------------------------
     train_input, train_target = input[train_indices], target[train_indices]
