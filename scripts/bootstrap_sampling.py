@@ -3,7 +3,6 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 
 
-
 def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus, device, replacement = True):
     
     # Sample orbit -> return matching data indices -----------------------------
@@ -25,20 +24,26 @@ def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus, devic
         nb_train = nb_train.to(device)
         nb_all = nb_all.to(device)
 
-    train_indices = []
-    # progress_old = -1
-    for i,nb in enumerate(nb_train):
-        cond = torch.isin(elements=nb_all,test_element=nb)
-        nb_indices = torch.nonzero(cond).squeeze().tolist()
-        if isinstance(nb_indices,int):
-            train_indices.append(nb_indices)
-        else:
-            train_indices.extend(nb_indices)
-        # progress = i * 100 / len(nb_train)
-        # if abs(progress - round(progress)) < 1e-1:
-        #     if round(progress) != round(progress_old):
-        #         print(f"{progress:.0f} %", end='\r', flush=True)
-        #     progress_old = progress
+    train_mask = torch.isin(nb_all, nb_train)
+    train_indices = torch.nonzero(train_mask, as_tuple=False).squeeze(-1)
+    
+    val_mask = ~train_mask  # Invert mask for validation
+    val_indices = torch.nonzero(val_mask, as_tuple=False).squeeze(-1)
+
+    # if train_indices.dim() == 0:
+    #     train_indices = train_indices.unsqueeze(0)
+    # if val_indices.dim() == 0:
+    #     val_indices = val_indices.unsqueeze(0)
+
+    # train_indices = []
+    # # progress_old = -1
+    # for i,nb in enumerate(nb_train):
+    #     cond = torch.isin(elements=nb_all,test_element=nb)
+    #     nb_indices = torch.nonzero(cond).squeeze().tolist()
+    #     if isinstance(nb_indices,int):
+    #         train_indices.append(nb_indices)
+    #     else:
+    #         train_indices.extend(nb_indices)
 
     train_indices = torch.tensor(train_indices, dtype=int)
     val_indices_bool = torch.isin(elements=nb_all, test_elements=nb_train, invert=True)

@@ -16,8 +16,8 @@ while (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
     
 
 
-# def run_ensemble_training():
-if __name__ == "__main__":
+def run_ensemble_training():
+# if __name__ == "__main__":
 
     # Bootstrap iteration---------------------------------------------
     for _ in range(config.training_config['ensemble_size']):
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         print('Making folder')
         # Make folder-------------------------------------------------
         counter = config.training_config['bootstrap_counter_start']
-        base_folder_name = 'models/PINN_ext_model_'
+        base_folder_name = 'models/TEST_PINN_ext_model_'
         # Keep creating new folders with incremented names until one with a unique name is found
         while True:
             folder_name = base_folder_name+str(counter)
@@ -144,6 +144,7 @@ if __name__ == "__main__":
 
         if config.training_config['validation']:
             orbit_nb = torch.load('data/orbit_nb.pt')
+            orbit_nb = orbit_nb[condition]
             train_loader, val_loader = bootstrap_sampling.prepare_bootstrap_dataloaders(input, target, orbit_nb, 
                                                                                     batch_size,
                                                                                     n_cpus,
@@ -151,7 +152,7 @@ if __name__ == "__main__":
                                                                                     replacement=config.training_config['sample_with_replacement'],
                                                                                     )
             
-            # assert 1 == 0, "Debugging stop"
+            assert 1 == 0, "Debugging stop"
             train(model,train_loader,val_loader, num_epochs, optimizer, DEVICE,
                 folder_name, n_cpus, lossfn, l1_lambda=l1_lambda)
         else:
@@ -163,9 +164,9 @@ if __name__ == "__main__":
             
         del model
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
     
-    # run_ensemble_training()
+    run_ensemble_training()
 
 
         
