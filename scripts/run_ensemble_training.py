@@ -93,7 +93,7 @@ def run_ensemble_training():
             alt_std = None
 
 
-        xyz_mean = 0#torch.mean(input[:, :3])
+        xyz_mean = 0#torch.mean(input[:, :3]).item()
         xyz_std = torch.std(input[:, :3]).item()
         
         model_params = {

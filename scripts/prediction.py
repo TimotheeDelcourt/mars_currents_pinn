@@ -47,6 +47,10 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     #     folder_name = 'models/PINN_ext_bootstrap_'+str(k)
     #     print('Starting prediction, bootstrap model', k)
 
+    model_params = np.load(folder_name+'/model_params.npy', allow_pickle=True).item()
+    if model_params['num_inputs'] == 3:
+        input = input[:, :3]
+
     # Load the script as a module
     # try:
     spec = importlib.util.spec_from_file_location("neuralnets", folder_name+"/neuralnets.py")
@@ -58,25 +62,27 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     config_training_module = importlib.util.module_from_spec(spec_config)
     spec_config.loader.exec_module(config_training_module)
     training_config = config_training_module.training_config
-    std_params = torch.load(folder_name+'/std_params.pt')
+
+    # std_params = torch.load(folder_name+'/std_params.pt')
     # troubleshoot -------------------------------------------------------------------
     # (that's because the randomly selected num_neurons_per_layer were not recorded)
-    for num_neurons_per_layer in range(7,11):
-        try:
-            model = NeuralNet(
-                        num_hidden_layers=1,#training_config['num_hidden_layers'],
-                        num_neurons_per_layer=num_neurons_per_layer,#training_config['num_neurons_per_layer'],
-                        xyz_mean=std_params[0],
-                        xyz_std=std_params[1],
-                        alt_mean=std_params[2],
-                        alt_std=std_params[3],
-                        activation=training_config['activation'])
-            file_name = folder_name+"/models/model.pt"
-            network = torch.load(file_name, map_location=device)
-            model.load_state_dict(network)
-            break
-        except:
-            continue
+    # for num_neurons_per_layer in range(7,11):
+    #     try:
+    model = NeuralNet(
+                num_hidden_layers=1,#training_config['num_hidden_layers'],
+                num_neurons_per_layer=model_params['num_neurons_per_layer'],#training_config['num_neurons_per_layer'],
+                xyz_mean=model_params['xyz_mean'],
+                xyz_std=model_params['xyz_std'],
+                alt_mean=model_params['alt_mean'],
+                alt_std=model_params['alt_std'],
+                num_inputs=model_params['num_inputs'],
+                activation=training_config['activation'])
+    file_name = folder_name+"/models/model_val_min.pt"
+    network = torch.load(file_name, map_location=device)
+    model.load_state_dict(network)
+        #     break
+        # except:
+        #     continue
     # ---------------------------------------------------------------------------------
 
     # epoch_nb = config.prediction_config['epoch_nb']
@@ -130,21 +136,24 @@ def predict_ensemble():
     B_sum_sq = None
     J_sum = None  
     J_sum_sq = None
-    n_models = k_stop - k_start + 1
+    n_models = 0
 
     for i, model in enumerate(range(k_start, k_stop+1)):
-        B, J = predict(input_tensor, model)
-        
-        if B_sum is None:
-            B_sum = B.clone()
-            B_sum_sq = B.pow(2)
-            J_sum = J.clone()
-            J_sum_sq = J.pow(2)
-        else:
-            B_sum += B
-            B_sum_sq += B.pow(2)
-            J_sum += J
-            J_sum_sq += J.pow(2)
+        try:
+            B, J = predict(input_tensor, model)
+            if B_sum is None:
+                B_sum = B.clone()
+                B_sum_sq = B.pow(2)
+                J_sum = J.clone()
+                J_sum_sq = J.pow(2)
+            else:
+                B_sum += B
+                B_sum_sq += B.pow(2)
+                J_sum += J
+                J_sum_sq += J.pow(2)
+            n_models += 1
+        except:
+            continue
 
     # Calculate statistics
     B_mean = B_sum / n_models

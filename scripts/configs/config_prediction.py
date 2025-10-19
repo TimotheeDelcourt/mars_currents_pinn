@@ -19,5 +19,5 @@ prediction_config = {
     'epoch_nb':None, # None = last epoch
 
     # predict_ensemble = 1
-    'models_start_stop':[32,66],
+    'models_start_stop':[70,73],
 }

@@ -105,8 +105,8 @@ def train(model, training_loader, validation_loader,
             
       
         if epoch > 30:
-            m, _ = utils.slope(train_loss_hist, 30)
-            if m > -0.001:
+            m, _ = utils.slope(val_loss_hist, 30)
+            if m > 0:
                 print('Plateau reached!')
                 break
 
