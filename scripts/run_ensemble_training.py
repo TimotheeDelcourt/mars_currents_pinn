@@ -38,7 +38,7 @@ def run_ensemble_training():
                 # If the folder exists, increment the counter and try again
                 counter += 1
 
-        # print(f'Training model {counter} corresponding to l1_lambda {l1_lambda}.')
+        print(f'Training model {counter}...')
 
         # Save the current config file in the folder----------------
         
@@ -160,6 +160,9 @@ def run_ensemble_training():
 
             train_noval(model, train_loader, num_epochs, optimizer, DEVICE,
                         folder_name, n_cpus, lossfn, l1_lambda = config.training_config['l1_lambda'])
+            
+        # print(f'Model {counter} trained and saved in {folder_name}.')
+        print('')
             
         del model
 
