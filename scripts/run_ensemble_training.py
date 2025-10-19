@@ -26,7 +26,7 @@ def run_ensemble_training():
         print('Making folder')
 
         # smoothing lambda test -----------
-        folder_name = 'models/PINN_ext_smoothness_reg_'+smoothness_lambda
+        folder_name = 'models/PINN_ext_smoothness_reg_'+str(smoothness_lambda)
         os.makedirs(folder_name)
         print(f'Training model with smoothness lambda {smoothness_lambda}...')
         # (comment make folder below) -----
