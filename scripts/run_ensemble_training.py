@@ -17,28 +17,35 @@ while (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
 
 
 def run_ensemble_training():
-# if __name__ == "__main__":
 
     # Bootstrap iteration---------------------------------------------
-    for _ in range(config.training_config['ensemble_size']):
+    # for _ in range(config.training_config['ensemble_size']):
+    for smoothness_lambda in [1e-8,1e-7,1e-6,1e-5,1e-4,1e-3]:
+    # for smoothness_lambda in [1e-2,1e-1,1,10,100,1000]:
 
         print('Making folder')
-        # Make folder-------------------------------------------------
-        counter = config.training_config['bootstrap_counter_start']
-        base_folder_name = 'models/PINN_ext_model_'
-        # Keep creating new folders with incremented names until one with a unique name is found
-        while True:
-            folder_name = base_folder_name+str(counter)
-            # Check if the folder exists
-            if not os.path.exists(folder_name):
-                # If the folder does not exist, create it
-                os.makedirs(folder_name)
-                break
-            else:
-                # If the folder exists, increment the counter and try again
-                counter += 1
 
-        print(f'Training model {counter}...')
+        # smoothing lambda test -----------
+        folder_name = 'models/PINN_ext_smoothness_reg_'+smoothness_lambda
+        os.makedirs(folder_name)
+        print(f'Training model with smoothness lambda {smoothness_lambda}...')
+        # (comment make folder below) -----
+
+        # # Make folder-------------------------------------------------
+        # counter = config.training_config['bootstrap_counter_start']
+        # base_folder_name = 'models/PINN_ext_model_'
+        # # Keep creating new folders with incremented names until one with a unique name is found
+        # while True:
+        #     folder_name = base_folder_name+str(counter)
+        #     # Check if the folder exists
+        #     if not os.path.exists(folder_name):
+        #         # If the folder does not exist, create it
+        #         os.makedirs(folder_name)
+        #         break
+        #     else:
+        #         # If the folder exists, increment the counter and try again
+        #         counter += 1
+        # print(f'Training model {counter}...')
 
         # Save the current config file in the folder----------------
         
@@ -63,7 +70,7 @@ def run_ensemble_training():
             num_neurons_per_layer=config.training_config['num_neurons_per_layer']
             alt_max = config.training_config['altitude_max']
             l1_lambda = config.training_config['l1_lambda']
-            include_alt = True
+            include_alt = config.training_config['include_alt']
         elif config.training_config['random_parameters'] == True:
             include_alt = np.random.choice([True,False])
             alt_max = np.random.randint(config.training_config['altitudes_max'][0], config.training_config['altitudes_max'][1]+1)
@@ -153,7 +160,7 @@ def run_ensemble_training():
             
             # assert 1 == 0, "Debugging stop"
             train(model,train_loader,val_loader, num_epochs, optimizer, DEVICE,
-                folder_name, n_cpus, lossfn, l1_lambda=l1_lambda)
+                folder_name, n_cpus, lossfn, l1_lambda=l1_lambda, smoothness_lambda=smoothness_lambda)
         else:
             train_dataset = TensorDataset(input, target)
             train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=n_cpus)
@@ -161,9 +168,7 @@ def run_ensemble_training():
             train_noval(model, train_loader, num_epochs, optimizer, DEVICE,
                         folder_name, n_cpus, lossfn, l1_lambda = config.training_config['l1_lambda'])
             
-        # print(f'Model {counter} trained and saved in {folder_name}.')
         print('')
-            
         del model
 
 if __name__ == "__main__":

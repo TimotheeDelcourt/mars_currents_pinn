@@ -20,13 +20,15 @@ training_config = {
     'validation':True,
     'learning_rate': 0.1,
     'num_hidden_layers':1,
-    'random_parameters':True, # including alt as input
+    'random_parameters':False, # including alt as input
     'sample_with_replacement':False,
 
     # pre-determined parameters
-    'altitude_max':1500,
-    'num_neurons_per_layer':8,
+    'altitude_max':600,
+    'num_neurons_per_layer':10,
     'l1_lambda':0,
+    'include_alt':False,
+    # 'smoothness_lambda':1e-6,
 
     # randomly selected parameters
     'l1_lambdas':[0, 0, 1e-7,1e-6,5*1e-6],
