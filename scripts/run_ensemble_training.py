@@ -20,8 +20,8 @@ def run_ensemble_training():
 
     # Bootstrap iteration---------------------------------------------
     # for _ in range(config.training_config['ensemble_size']):
-    for smoothness_lambda in [1e-8,1e-7,1e-6,1e-5,1e-4,1e-3]:
-    # for smoothness_lambda in [1e-2,1e-1,1,10,100,1000]:
+    # for smoothness_lambda in [1e-8,1e-7,1e-6,1e-5,1e-4,1e-3]:
+    for smoothness_lambda in [1e-2,1e-1,1,10,100,1000]:
 
         print('Making folder')
 
