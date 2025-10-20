@@ -1,8 +1,8 @@
 
 
 # # dashboard
-predict_single_model = 0
-predict_ensemble = 1
+predict_single_model = 1
+predict_ensemble = 0
 
 
 
@@ -15,8 +15,9 @@ prediction_config = {
     'batch_size': 50000, # only used if minibatch is 1
    
     # predict_single_model = 1
-    'model_nb':69, # predict_single_model = 1
+    'model_nb':None, # predict_single_model = 1
     'epoch_nb':None, # None = last epoch
+    'reg_nb':0.1,
 
     # predict_ensemble = 1
     'models_start_stop':[70,106],

@@ -38,14 +38,9 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     '''
      
     # Load model -----------------------------------------------
-    # if config.prediction_config['bootstrap_nb'] is None:
-    #     k = config.prediction_config['model_nb']
-    folder_name = 'models/PINN_ext_model_'+str(k)
-    #     print('Starting prediction, model', k)
-    # else:
-    #     k = config.prediction_config['bootstrap_nb']
-    #     folder_name = 'models/PINN_ext_bootstrap_'+str(k)
-    #     print('Starting prediction, bootstrap model', k)
+ 
+    # folder_name = 'models/PINN_ext_model_'+str(k)
+    folder_name = 'models/PINN_ext_smoothness_reg_'+str(config.prediction_config['reg_nb'])
 
     model_params = np.load(folder_name+'/model_params.npy', allow_pickle=True).item()
     if model_params['num_inputs'] == 3:
@@ -228,11 +223,12 @@ def predict_single():
     df['Jt'] = Jt.to('cpu').detach()
     df['Jp'] = Jp.to('cpu').detach()
     
-    epoch_nb = config.prediction_config['epoch_nb']
-    if epoch_nb == None:
-        epoch_nb = 'last'
+    # epoch_nb = config.prediction_config['epoch_nb']
+    # if epoch_nb == None:
+    #     epoch_nb = 'last'
 
-    df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_epoch{epoch_nb}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+    # df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+    df.to_csv(f"predictions/PINN_MSO_reg{config.prediction_config['reg_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
     
     print(df)
 

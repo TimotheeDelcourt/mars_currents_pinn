@@ -136,6 +136,8 @@ def train(model, training_loader, validation_loader,
                 fig, axs=plt.subplots(1,2, figsize=(12,4))
             axs[0].plot(xaxis, train_loss_hist, label=f"Train loss: {train_loss_hist[-1]:.1f}")
             axs[1].plot(xaxis, train_loss_hist, label="Train logloss")
+            axs[0].plot(xaxis, val_loss_hist, label="Validation loss")
+            axs[1].plot(xaxis, val_loss_hist, label="Validation logloss")
             axs[1].set_xscale("log")
             axs[1].set_yscale("log")
             for ax in axs:
