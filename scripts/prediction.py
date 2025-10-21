@@ -47,7 +47,6 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
         input = input[:, :3]
 
     # Load the script as a module
-    # try:
     spec = importlib.util.spec_from_file_location("neuralnets", folder_name+"/neuralnets.py")
     neuralnets_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(neuralnets_module)

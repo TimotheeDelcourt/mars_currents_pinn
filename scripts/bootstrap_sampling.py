@@ -16,9 +16,10 @@ def prepare_bootstrap_dataloaders(input,target,nb_all, batch_size, n_cpus, repla
     else:
         print('Preparing bootstrap without replacement.')
         data_split = 0.3
-        nb_train, _ = train_test_split(nb_unique.numpy(), test_size=data_split)
+        nb_train, _ = train_test_split(nb_unique.numpy(), test_size=data_split, shuffle=True, random_state=42)
         nb_train = torch.tensor(nb_train, dtype=int)
         print('Sampled orbits / total orbits: ', len(nb_train)/len(nb_unique)) #check
+        print(nb_train)
 
 
     train_mask = torch.isin(nb_all, nb_train)
