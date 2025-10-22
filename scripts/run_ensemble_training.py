@@ -86,6 +86,8 @@ def run_ensemble_training():
         # print(f'L1 lambda: {l1_lambda}')
         print(f'Include altitude: {include_alt}')
         print(f'Smoothness lambda: {smoothness_lambda}')
+        print(f'Crop limit: {lim} nT')
+
 
         condition = (alt <= alt_max) & torch.all((target <= lim) & (target >= -lim), dim=1)
         target = target[condition]
@@ -117,6 +119,9 @@ def run_ensemble_training():
             'l1_lambda': l1_lambda,
             'num_neurons_per_layer': num_neurons_per_layer,
             'alt_max': alt_max,
+            'crop_limit': lim,
+            'smoothness_lambda': smoothness_lambda,
+            'include_alt': include_alt,
         }
 
         np.save(folder_name+'/model_params.npy', model_params)
