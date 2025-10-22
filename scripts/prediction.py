@@ -40,7 +40,7 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     # Load model -----------------------------------------------
  
     # folder_name = 'models/PINN_ext_model_'+str(k)
-    folder_name = 'models/PINN_ext_smoothness_reg_'+str(config.prediction_config['reg_nb'])
+    folder_name = 'models/PINN_ext_smoothness_reg_'+f'{config.prediction_config["reg_nb"]:.0e}'
 
     model_params = np.load(folder_name+'/model_params.npy', allow_pickle=True).item()
     if model_params['num_inputs'] == 3:
@@ -227,7 +227,7 @@ def predict_single():
     #     epoch_nb = 'last'
 
     # df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
-    df.to_csv(f"predictions/PINN_MSO_reg{config.prediction_config['reg_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+    df.to_csv(f"predictions/PINN_MSO_reg{config.prediction_config['reg_nb']:.0e}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
     
     print(df)
 

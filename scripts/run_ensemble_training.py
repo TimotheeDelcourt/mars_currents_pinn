@@ -19,33 +19,33 @@ while (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
 def run_ensemble_training():
 
     # Bootstrap iteration---------------------------------------------
-    # for _ in range(config.training_config['ensemble_size']):
+    for _ in range(config.training_config['ensemble_size']):
     # for smoothness_lambda in [1e6,1e7,1e8]:
-    for smoothness_lambda in [1e9,1e10,1e11]:
+    # for smoothness_lambda in [1e9,1e10,1e11]:
 
         print('Making folder')
 
-        # smoothing lambda test -----------
-        folder_name = 'models/PINN_ext_smoothness_reg_'+f'{smoothness_lambda:.0e}'
-        os.makedirs(folder_name)
-        print(f'Training model with smoothness lambda {smoothness_lambda:.0e}...')
-        # (comment make folder below) -----
+        # # smoothing lambda test -----------
+        # folder_name = 'models/PINN_ext_smoothness_reg_'+f'{smoothness_lambda:.0e}'
+        # os.makedirs(folder_name)
+        # print(f'Training model with smoothness lambda {smoothness_lambda:.0e}...')
+        # # (comment make folder below) -----
 
-        # # Make folder-------------------------------------------------
-        # counter = config.training_config['bootstrap_counter_start']
-        # base_folder_name = 'models/PINN_ext_model_'
-        # # Keep creating new folders with incremented names until one with a unique name is found
-        # while True:
-        #     folder_name = base_folder_name+str(counter)
-        #     # Check if the folder exists
-        #     if not os.path.exists(folder_name):
-        #         # If the folder does not exist, create it
-        #         os.makedirs(folder_name)
-        #         break
-        #     else:
-        #         # If the folder exists, increment the counter and try again
-        #         counter += 1
-        # print(f'Training model {counter}...')
+        # Make folder-------------------------------------------------
+        counter = config.training_config['bootstrap_counter_start']
+        base_folder_name = 'models/PINN_ext_model_'
+        # Keep creating new folders with incremented names until one with a unique name is found
+        while True:
+            folder_name = base_folder_name+str(counter)
+            # Check if the folder exists
+            if not os.path.exists(folder_name):
+                # If the folder does not exist, create it
+                os.makedirs(folder_name)
+                break
+            else:
+                # If the folder exists, increment the counter and try again
+                counter += 1
+        print(f'Training model {counter}...')
 
         # Save the current config file in the folder----------------
         
@@ -69,20 +69,25 @@ def run_ensemble_training():
         if config.training_config['random_parameters'] == False:
             num_neurons_per_layer=config.training_config['num_neurons_per_layer']
             alt_max = config.training_config['altitude_max']
-            l1_lambda = config.training_config['l1_lambda']
+            # l1_lambda = config.training_config['l1_lambda']
             include_alt = config.training_config['include_alt']
+            lim = 60
         elif config.training_config['random_parameters'] == True:
-            include_alt = np.random.choice([True,False])
+            include_alt = False#np.random.choice([True,False])
             alt_max = np.random.randint(config.training_config['altitudes_max'][0], config.training_config['altitudes_max'][1]+1)
-            l1_lambda = np.random.choice(config.training_config['l1_lambdas'])
+            # l1_lambda = np.random.choice(config.training_config['l1_lambdas'])
             num_neurons_per_layer = np.random.randint(config.training_config['nums_neurons_per_layer'][0], config.training_config['nums_neurons_per_layer'][1]+1)
+            lim = np.random.choice(config.training_config['crop_outlier'])
 
+        smoothness_lambda = 1e10
+        l1_lambda = 0
         print(f'Altitude max: {alt_max} km')
         print(f'Number of neurons per layer: {num_neurons_per_layer}')
-        print(f'L1 lambda: {l1_lambda}')
+        # print(f'L1 lambda: {l1_lambda}')
         print(f'Include altitude: {include_alt}')
+        print(f'Smoothness lambda: {smoothness_lambda}')
 
-        condition = (alt <= alt_max) & torch.all((target <= 60) & (target >= -60), dim=1)
+        condition = (alt <= alt_max) & torch.all((target <= lim) & (target >= -lim), dim=1)
         target = target[condition]
 
         if include_alt == True:

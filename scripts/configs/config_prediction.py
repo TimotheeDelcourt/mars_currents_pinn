@@ -17,7 +17,7 @@ prediction_config = {
     # predict_single_model = 1
     'model_nb':None, # predict_single_model = 1
     'epoch_nb':None, # None = last epoch
-    'reg_nb':100000000.0,
+    'reg_nb':1e11,
 
     # predict_ensemble = 1
     'models_start_stop':[70,106],

@@ -20,7 +20,7 @@ training_config = {
     'validation':True,
     'learning_rate': 0.1,
     'num_hidden_layers':1,
-    'random_parameters':False, # including alt as input
+    'random_parameters':True, # including alt as input
     'sample_with_replacement':False,
 
     # pre-determined parameters
@@ -31,8 +31,9 @@ training_config = {
     # 'smoothness_lambda':1e-6,
 
     # randomly selected parameters
-    'l1_lambdas':[0, 0, 1e-7,1e-6,5*1e-6],
+    # 'l1_lambdas':[0, 0, 1e-7,1e-6,5*1e-6],
     'altitudes_max':[200,1500],
     'nums_neurons_per_layer':[7,16],
+    'crop_outlier':[30,40,50,60,100],
 }
 
