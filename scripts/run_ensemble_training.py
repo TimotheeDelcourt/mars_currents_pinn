@@ -74,10 +74,11 @@ def run_ensemble_training():
             lim = 60
         elif config.training_config['random_parameters'] == True:
             include_alt = False#np.random.choice([True,False])
-            if len(alt_max) == 1:
-                alt_max = config.training_config['altitudes_max']
+            alt_max_list = config.training_config['altitudes_max']
+            if len(alt_max_list) == 1:
+                alt_max = alt_max_list[0]
             else:
-                alt_max = np.random.randint(config.training_config['altitudes_max'][0], config.training_config['altitudes_max'][1]+1)
+                alt_max = np.random.randint(alt_max_list[0], alt_max_list[1]+1)
             # l1_lambda = np.random.choice(config.training_config['l1_lambdas'])
             num_neurons_per_layer = np.random.randint(config.training_config['nums_neurons_per_layer'][0], config.training_config['nums_neurons_per_layer'][1]+1)
             lim = np.random.choice(config.training_config['crop_outlier'])
