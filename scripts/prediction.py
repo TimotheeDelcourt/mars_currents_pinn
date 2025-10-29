@@ -20,14 +20,41 @@ else:
 # while os.path.basename(os.getcwd()) != 'project':
 #     os.chdir('../')
 
-def generate_input():
+def generate_input_fibonacci():
     n = config.prediction_config['num_samples']
     df, input_tensor = utils.fibonacci_sphere(samples = n,   alt = config.prediction_config['alt'])
     alt = torch.ones(len(df))*config.prediction_config['alt']
     alt = alt.unsqueeze(1)
     input_tensor = torch.concatenate((input_tensor, alt), dim=1)
     return df, input_tensor
+
+def generate_input_profiles():
+    n = int(np.sqrt(config.prediction_config['num_samples']))
+    lon_value = int(np.deg2rad(config.prediction_config['lon']))
+
+    colat_i = torch.linspace(start = 0, end = torch.pi, steps = n, dtype=torch.float32)
+    r_i = torch.linspace(start = 3393.5, end = 3393.5+1500, steps = n, dtype=torch.float32)
+    colat, r = torch.meshgrid(colat_i, r_i)
+    colat = colat.flatten()
+    r = r.flatten()
+    lon = torch.ones_like(colat) * lon_value
+    input_tensor = utils.spherical_to_cartesian_torch(r, colat, lon)
+
+    lat_deg = torch.rad2deg(torch.pi/2 - colat)
+    lon_deg = torch.rad2deg(lon)
+    df = pd.DataFrame({'alt':r-3393.5, 'lat':lat_deg.numpy(), 'lon':lon_deg.numpy()})
+    return df, input_tensor
  
+def choose_input_type():
+    input_type_str = config.prediction_config['input_type']
+    if input_type_str == 'fibonacci':
+        df, input_tensor = generate_input_fibonacci()
+    elif input_type_str == 'profile':
+        df, input_tensor = generate_input_profiles()
+    else:
+        print('Please select a valid input type in config_prediction.py')
+        return
+    return df, input_tensor, input_type_str
 
 def predict(input, k , minibatch=config.prediction_config['minibatch']):
     '''
@@ -36,11 +63,10 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     Output: tuple of (1) torch tensor of shape (n,3) with columns: Bx, By, Bz [nT]; (2) torch tensor of shape (n,3) with columns: Jx, Jy, Jz [mA/m2]
     device = GPU if minibatch = 0, else CPU.
     '''
-     
     # Load model -----------------------------------------------
  
-    # folder_name = 'models/PINN_ext_model_'+str(k)
-    folder_name = 'models/PINN_ext_smoothness_reg_'+f'{config.prediction_config["reg_nb"]:.0e}'
+    folder_name = 'models/PINN_ext_final_model_'+str(k)
+    # folder_name = 'models/PINN_ext_smoothness_reg_'+f'{config.prediction_config["reg_nb"]:.0e}'
 
     model_params = np.load(folder_name+'/model_params.npy', allow_pickle=True).item()
     if model_params['num_inputs'] == 3:
@@ -112,16 +138,21 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
             J_pred[index] = J_pred_batch.to('cpu').detach()
 
             del input_batch, A_pred_batch, B_pred_batch, J_pred_batch
-            percent = index[-1]*100/n
-            if percent % 10 < 0.1:
-                print(f'Samples {percent} % done', end='\r')
+            # percent = index[-1]*100/n
+            # if percent % 10 < 0.1:
+            #     print(f'Samples {percent} % done', end='\r')
         
         J_pred /= 1000 # because distance is in km, initial result has units of 1e-3*nA/m2
 
     return (B_pred, J_pred)
     
+
+
+
 def predict_ensemble():
-    df, input_tensor = generate_input()
+
+    df, input_tensor, input_type_str = choose_input_type()
+
 
     k_start = config.prediction_config['models_start_stop'][0]
     k_stop  = config.prediction_config['models_start_stop'][1]
@@ -147,6 +178,7 @@ def predict_ensemble():
                 J_sum_sq += J.pow(2)
             n_models += 1
         except:
+            print('failed')
             continue
 
     # Calculate statistics
@@ -197,12 +229,15 @@ def predict_ensemble():
     df['Jp_std'] = Jp_std
     del Jr_std, Jt_std, Jp_std
 
-    df.to_csv(f"predictions/PINN_MSO_ensemble_model{k_start}to{k_stop}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
-
+    if input_type_str == 'fibonacci':
+        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+    elif input_type_str == 'profile':
+        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_lon_{config.prediction_config['lon']}deg_profile.csv", index=False)
     print(df)
 
+
 def predict_single():
-    df, input_tensor = generate_input()
+    df, input_tensor, input_type_str = choose_input_type()
 
     B, J = predict(input_tensor, k = config.prediction_config['model_nb'])
     df['Bx'] = B[:,0].to('cpu').detach()
@@ -227,7 +262,7 @@ def predict_single():
     #     epoch_nb = 'last'
 
     # df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
-    df.to_csv(f"predictions/PINN_MSO_reg{config.prediction_config['reg_nb']:.0e}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+    # df.to_csv(f"predictions/PINN_MSO_reg{config.prediction_config['reg_nb']:.0e}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
     
     print(df)
 
@@ -245,3 +280,6 @@ if __name__ == '__main__':
 
     if config.predict_single_model:
         predict_single()
+
+
+    # generate_input_profiles()

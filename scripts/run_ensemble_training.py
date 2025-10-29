@@ -33,7 +33,7 @@ def run_ensemble_training():
 
         # Make folder-------------------------------------------------
         counter = config.training_config['bootstrap_counter_start']
-        base_folder_name = 'models/PINN_ext_final_model_'
+        base_folder_name = 'models/PINN_ext_all_data_model_'
         # Keep creating new folders with incremented names until one with a unique name is found
         while True:
             folder_name = base_folder_name+str(counter)
@@ -74,7 +74,10 @@ def run_ensemble_training():
             lim = 60
         elif config.training_config['random_parameters'] == True:
             include_alt = False#np.random.choice([True,False])
-            alt_max = np.random.randint(config.training_config['altitudes_max'][0], config.training_config['altitudes_max'][1]+1)
+            if len(alt_max) == 1:
+                alt_max = config.training_config['altitudes_max']
+            else:
+                alt_max = np.random.randint(config.training_config['altitudes_max'][0], config.training_config['altitudes_max'][1]+1)
             # l1_lambda = np.random.choice(config.training_config['l1_lambdas'])
             num_neurons_per_layer = np.random.randint(config.training_config['nums_neurons_per_layer'][0], config.training_config['nums_neurons_per_layer'][1]+1)
             lim = np.random.choice(config.training_config['crop_outlier'])

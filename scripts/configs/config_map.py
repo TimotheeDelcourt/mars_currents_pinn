@@ -1,9 +1,13 @@
 
+# # dashboard
+all_maps = 1
+wind_map = 1
+
 
 map_config = {
-    # 'model_name' : 'PINN_MSO_ensemble_model70to106_150km_fibonacci',
+    'model_name' : 'PINN_MSO_ensemble_models_1to50_150km_fibonacci',
     # 'model_name' : 'PINN_MSO_model69_epochlast_150km_fibonacci',
-    'model_name' : 'PINN_MSO_reg_1e+11_150km_fibonacci',
+    # 'model_name' : 'PINN_MSO_reg_1e+11_150km_fibonacci',
     'shading': False, # True or False
     'proj':'central', # north,south, or central
     'filetype': '.png',
