@@ -33,7 +33,7 @@ def run_ensemble_training():
 
         # Make folder-------------------------------------------------
         counter = config.training_config['bootstrap_counter_start']
-        base_folder_name = 'models/PINN_ext_all_data_model_'
+        base_folder_name = 'models/PINN_ext_model_'
         # Keep creating new folders with incremented names until one with a unique name is found
         while True:
             folder_name = base_folder_name+str(counter)

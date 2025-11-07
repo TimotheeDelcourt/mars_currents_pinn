@@ -5,7 +5,7 @@ wind_map = 1
 
 
 map_config = {
-    'model_name' : 'PINN_MSO_ensemble_models_1to50_150km_fibonacci',
+    'model_name' : 'PINN_MSO_ensemble_models_1to22_150km_fibonacci_gen2',
     # 'model_name' : 'PINN_MSO_model69_epochlast_150km_fibonacci',
     # 'model_name' : 'PINN_MSO_reg_1e+11_150km_fibonacci',
     'shading': False, # True or False

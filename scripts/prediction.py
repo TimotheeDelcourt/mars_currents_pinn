@@ -30,10 +30,11 @@ def generate_input_fibonacci():
 
 def generate_input_profiles():
     n = int(np.sqrt(config.prediction_config['num_samples']))
-    lon_value = int(np.deg2rad(config.prediction_config['lon']))
+    lon_value = np.deg2rad(config.prediction_config['lon'])
 
     colat_i = torch.linspace(start = 0, end = torch.pi, steps = n, dtype=torch.float32)
-    r_i = torch.linspace(start = 3393.5, end = 3393.5+1500, steps = n, dtype=torch.float32)
+    alt_max = config.prediction_config['alt_max']
+    r_i = torch.linspace(start = 3393.5, end = 3393.5+alt_max, steps = n, dtype=torch.float32)
     colat, r = torch.meshgrid(colat_i, r_i)
     colat = colat.flatten()
     r = r.flatten()
@@ -65,7 +66,7 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     '''
     # Load model -----------------------------------------------
  
-    folder_name = 'models/PINN_ext_final_model_'+str(k)
+    folder_name = 'models/PINN_ext_all_data_model_'+str(k)
     # folder_name = 'models/PINN_ext_smoothness_reg_'+f'{config.prediction_config["reg_nb"]:.0e}'
 
     model_params = np.load(folder_name+'/model_params.npy', allow_pickle=True).item()
@@ -230,9 +231,9 @@ def predict_ensemble():
     del Jr_std, Jt_std, Jp_std
 
     if input_type_str == 'fibonacci':
-        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_{config.prediction_config['alt']}km_fibonacci_gen2.csv", index=False)
     elif input_type_str == 'profile':
-        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_lon_{config.prediction_config['lon']}deg_profile.csv", index=False)
+        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_lon_{config.prediction_config['lon']}deg_profile_gen2.csv", index=False)
     print(df)
 
 

@@ -11,7 +11,7 @@ prediction_config = {
     'num_samples': 900000, # fibonnaci_sphere
     'num_workers': 8,
     'minibatch': 1, 
-    'batch_size': 50000, # only used if minibatch is 1
+    'batch_size': 100000, # only used if minibatch is 1
 
     # options:
    
@@ -21,10 +21,11 @@ prediction_config = {
     'reg_nb':1e11,
 
     # if predict_ensemble = 1
-    'models_start_stop':[1,50],
+    'models_start_stop':[1,22],
 
     # if 'input_type': 'profile'
-    'lon' : 0, # MSO longitude in degrees
+    'lon' : 270, # MSO longitude in degrees
+    'alt_max':3500, # km
 
     # if 'input_type': 'fibonacci_sphere'
     'alt': 150,
