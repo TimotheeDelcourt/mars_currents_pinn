@@ -66,7 +66,9 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     '''
     # Load model -----------------------------------------------
  
-    folder_name = 'models/PINN_ext_all_data_model_'+str(k)
+    models_dir = config.prediction_config['models_dir']
+    folder_name = 'models/'+models_dir+str(k)
+    # folder_name = f'models/2500km/PINN_ext_all_data_model_'+str(k)
     # folder_name = 'models/PINN_ext_smoothness_reg_'+f'{config.prediction_config["reg_nb"]:.0e}'
 
     model_params = np.load(folder_name+'/model_params.npy', allow_pickle=True).item()
@@ -230,10 +232,14 @@ def predict_ensemble():
     df['Jp_std'] = Jp_std
     del Jr_std, Jt_std, Jp_std
 
+    add_str = config.prediction_config['add_str']
+    if add_str != '':
+        add_str = '_'+add_str
     if input_type_str == 'fibonacci':
-        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_{config.prediction_config['alt']}km_fibonacci_gen2.csv", index=False)
+        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_{config.prediction_config['alt']}km_fibonacci{add_str}.csv", index=False)
     elif input_type_str == 'profile':
-        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_lon_{config.prediction_config['lon']}deg_profile_gen2.csv", index=False)
+        alt_max = config.prediction_config['alt_max']
+        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_lon_{config.prediction_config['lon']}deg_profile{add_str}_{alt_max}km.csv", index=False)
     print(df)
 
 

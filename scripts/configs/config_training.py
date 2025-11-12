@@ -32,8 +32,8 @@ training_config = {
 
     # randomly selected parameters
     # 'l1_lambdas':[0, 0, 1e-7,1e-6,5*1e-6],
-    'altitudes_max':[9999999],#[200,1500],# can contain a single value, or start and stop values for random selection
-    'nums_neurons_per_layer':[12,30],
-    'crop_outlier':[30,40,60,80,100], # can be a range or contain a single value
+    'altitudes_max':[200],#[200,1500],# can contain a single value, or start and stop values for random selection
+    'nums_neurons_per_layer':[8,25],
+    'crop_outlier':[40,70,100,99999999], # can be a range or contain a single value
 }
 

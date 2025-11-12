@@ -7,11 +7,13 @@ predict_ensemble = 1
 
 
 prediction_config = {
-    'input_type': 'profile', # 'fibonacci' or 'profile'
+    'input_type': 'fibonacci', # 'fibonacci' or 'profile'
     'num_samples': 900000, # fibonnaci_sphere
     'num_workers': 8,
     'minibatch': 1, 
     'batch_size': 100000, # only used if minibatch is 1
+    'models_dir': '272km/PINN_ext_final_model_', # inside models/
+    'add_str':'lowaltsubset', # write '' if nothing to add to file name
 
     # options:
    
@@ -21,11 +23,11 @@ prediction_config = {
     'reg_nb':1e11,
 
     # if predict_ensemble = 1
-    'models_start_stop':[1,22],
+    'models_start_stop':[1,50],
 
     # if 'input_type': 'profile'
-    'lon' : 270, # MSO longitude in degrees
-    'alt_max':3500, # km
+    'lon' : 90, # MSO longitude in degrees
+    'alt_max':1500, # km
 
     # if 'input_type': 'fibonacci_sphere'
     'alt': 150,
