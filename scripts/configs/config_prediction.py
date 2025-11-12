@@ -1,8 +1,8 @@
 
 
 # # dashboard
-predict_single_model = 1
-predict_ensemble = 0
+predict_single_model = 0
+predict_ensemble = 1
 
 
 
@@ -18,12 +18,12 @@ prediction_config = {
     # options:
    
     # if predict_single_model = 1
-    'model_nb':2, # predict_single_model = 1
+    'model_nb':3, # predict_single_model = 1
     'epoch_nb':None, # None = last epoch
     # 'reg_nb':1e11,
 
     # if predict_ensemble = 1
-    'models_start_stop':[1,50],
+    'models_start_stop':[1,4],
 
     # if 'input_type': 'profile'
     'lon' : 90, # MSO longitude in degrees

@@ -9,6 +9,7 @@ from neuralnets import NeuralNet_indep
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
 import random
+import utils
 
 
 while (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
@@ -60,7 +61,9 @@ def run_ensemble_training():
         print('Loading data')
         input_xyz = torch.load('data/position_mso.pt')
         input_sph = torch.load('data/position_mso_spherical.pt')
-        alt = input_sph[:,0]
+        # alt = input_sph[:,0]
+        
+        
         
         crustal_field_mso = torch.load('data/crustal_field_mso.pt')
         observation_mso = torch.load('data/observation_mso.pt')
@@ -93,11 +96,25 @@ def run_ensemble_training():
         print(f'Crop limit: {lim} nT')
 
 
-        condition = (alt <= alt_max) & torch.all((target <= lim) & (target >= -lim), dim=1)
+        condition = (input_sph[:,0] <= alt_max) & torch.all((target <= lim) & (target >= -lim), dim=1)
+        # MBF and MSO fixed------------------------------------------------------------------------
+        input_pc_sph = torch.load('data/position_pc.pt')
+        condition2 = torch.all(torch.isclose(input_sph, input_pc_sph, atol=15), dim=1)
+        condition = condition & condition2
+        input_pc_xyz = utils.spherical_to_cartesian_torch(input_pc_sph[:,0]+3390, 
+                                         90-input_pc_sph[:,1]*np.pi/180, input_pc_sph[:,2]*np.pi/180)
+        
+        input_xyz = input_pc_xyz # replace mso frame by pc frame (input)
+
+        del target, observation_mso, crustal_field_mso
+        crustal_field_pc_xyz = torch.load('data/crustal_field_pc_xyz.pt')
+        observation_pc_xyz = torch.load('data/observation_pc_xyz.pt')
+        target = observation_pc_xyz - crustal_field_pc_xyz # replace target in mso frame by target in pc frame
+        # -----------------------------------------------------------------------------------------
         target = target[condition]
 
         if include_alt == True:
-            input = torch.concatenate((input_xyz, alt.unsqueeze(1)), dim=1)
+            input = torch.concatenate((input_xyz, input_sph[:,0].unsqueeze(1)), dim=1)
             input = input[condition]
             num_inputs = 4
             alt_mean = torch.mean(input[:, 3]).item()
