@@ -73,7 +73,7 @@ def run_ensemble_training():
             include_alt = config.training_config['include_alt']
             lim = 60
         elif config.training_config['random_parameters'] == True:
-            include_alt = np.random.choice([True,False])
+            include_alt = False #np.random.choice([True,False])
             alt_max_list = config.training_config['altitudes_max']
             if len(alt_max_list) == 1:
                 alt_max = alt_max_list[0]

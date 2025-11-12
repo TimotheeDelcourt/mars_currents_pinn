@@ -1,8 +1,8 @@
 
 
 # # dashboard
-predict_single_model = 0
-predict_ensemble = 1
+predict_single_model = 1
+predict_ensemble = 0
 
 
 
@@ -12,15 +12,15 @@ prediction_config = {
     'num_workers': 8,
     'minibatch': 1, 
     'batch_size': 100000, # only used if minibatch is 1
-    'models_dir': '272km/PINN_ext_final_model_', # inside models/
-    'add_str':'lowaltsubset', # write '' if nothing to add to file name
+    'models_dir': '200km/PINN_ext_model_', # inside models/
+    'add_str':'200kmdata', # write '' if nothing to add to file name
 
     # options:
    
     # if predict_single_model = 1
-    'model_nb':49, # predict_single_model = 1
+    'model_nb':1, # predict_single_model = 1
     'epoch_nb':None, # None = last epoch
-    'reg_nb':1e11,
+    # 'reg_nb':1e11,
 
     # if predict_ensemble = 1
     'models_start_stop':[1,50],

@@ -268,7 +268,10 @@ def predict_single():
     # if epoch_nb == None:
     #     epoch_nb = 'last'
 
-    # df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
+    add_str = config.prediction_config['add_str']
+    if add_str != '':
+        add_str = '_'+add_str
+    df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_{config.prediction_config['alt']}km_fibonacci{add_str}.csv", index=False)
     # df.to_csv(f"predictions/PINN_MSO_reg{config.prediction_config['reg_nb']:.0e}_{config.prediction_config['alt']}km_fibonacci.csv", index=False)
     
     print(df)
