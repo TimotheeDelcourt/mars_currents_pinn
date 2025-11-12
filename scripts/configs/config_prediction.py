@@ -18,7 +18,7 @@ prediction_config = {
     # options:
    
     # if predict_single_model = 1
-    'model_nb':1, # predict_single_model = 1
+    'model_nb':2, # predict_single_model = 1
     'epoch_nb':None, # None = last epoch
     # 'reg_nb':1e11,
 
