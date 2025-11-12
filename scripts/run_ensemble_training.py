@@ -97,7 +97,11 @@ def run_ensemble_training():
 
 
         condition = (input_sph[:,0] <= alt_max) & torch.all((target <= lim) & (target >= -lim), dim=1)
+
+
         # MBF and MSO fixed------------------------------------------------------------------------
+        del target, observation_mso, crustal_field_mso, input_xyz
+        print('MBF fixed experiment')
         input_pc_sph = torch.load('data/position_pc.pt')
         condition2 = torch.all(torch.isclose(input_sph, input_pc_sph, atol=15), dim=1)
         condition = condition & condition2
@@ -105,12 +109,11 @@ def run_ensemble_training():
                                          90-input_pc_sph[:,1]*np.pi/180, input_pc_sph[:,2]*np.pi/180)
         
         input_xyz = input_pc_xyz # replace mso frame by pc frame (input)
-
-        del target, observation_mso, crustal_field_mso
         crustal_field_pc_xyz = torch.load('data/crustal_field_pc_xyz.pt')
         observation_pc_xyz = torch.load('data/observation_pc_xyz.pt')
         target = observation_pc_xyz - crustal_field_pc_xyz # replace target in mso frame by target in pc frame
         # -----------------------------------------------------------------------------------------
+
         target = target[condition]
 
         if include_alt == True:
