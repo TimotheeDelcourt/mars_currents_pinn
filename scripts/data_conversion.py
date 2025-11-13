@@ -78,13 +78,15 @@ def pc_sph2cart(position_pc=torch.load('data/position_pc.pt'), field_pc=torch.lo
 
 def make_subsolarlongitude_series(): # in MBF frame
     df = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['time'])
-    # df = df[::10000].copy()
+    df = df[::10000].copy()
     subsolar_xyz = np.zeros((len(df),3))
+    L_s = np.zeros(len(df))
     furnsh("scripts/kernels.txt")
     for i,t in enumerate(tqdm(df.time)):
         et = spice.datetime2et(t)
         sun_pos, _, _ = spice.subslr(method='NEAR POINT/ELLIPSOID', target='Mars', et=et, fixref='IAU_MARS', abcorr='NONE', obsrvr='Mars')
         subsolar_xyz[i] = sun_pos
+        L_s[i] = spice.lspcn('MARS', et, 'NONE')
         
     subsolar_xyz = torch.tensor(subsolar_xyz, dtype=torch.float32)
     _, colat_rad, lon_rad = utils.cartesian_to_spherical(subsolar_xyz[:,0], subsolar_xyz[:,1], subsolar_xyz[:,2])
@@ -93,7 +95,12 @@ def make_subsolarlongitude_series(): # in MBF frame
     print(subsolar_lat_lon)
     print(f'lat min, max: {subsolar_lat_lon[:,0].min()}, {subsolar_lat_lon[:,0].max()}')
     print(f'lon min, max: {subsolar_lat_lon[:,1].min()}, {subsolar_lat_lon[:,1].max()}')
-   
+    L_s = torch.tensor(L_s, dtype=torch.float32)
+    L_s = torch.rad2deg(L_s)
+    print(L_s)
+    print(f'L_s min, max: {L_s.min()}, {L_s.max()}')
+
+    torch.save(L_s, 'data/Ls_series.pt')
     torch.save(subsolar_lat_lon, 'data/subsolar_lat_lon.pt')
 
 # def make_subsolarlongitude_series_parallel():
@@ -122,6 +129,8 @@ def make_subsolarlongitude_series(): # in MBF frame
    
     # torch.save(subsolar_lat_lon, 'data/subsolar_lat_lon.pt')
 
+
+# https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/MATLAB/mice/cspice_lspcn.html
 
 if __name__ == "__main__":
 
