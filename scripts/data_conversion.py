@@ -9,7 +9,8 @@ from spiceypy import *
 import spiceypy as spice
 import time
 from multiprocessing import Pool, cpu_count
-from . import utils
+# from . import utils
+import utils
 
 
 
@@ -75,9 +76,51 @@ def pc_sph2cart(position_pc=torch.load('data/position_pc.pt'), field_pc=torch.lo
     field_pc_xyz = utils.field_spher_to_cart(position_pc,field_pc)
     torch.save(field_pc_xyz, 'data/crustal_field_pc_xyz.pt')
 
-    
+def make_subsolarlongitude_series(): # in MBF frame
+    df = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['time'])
+    # df = df[::10000].copy()
+    subsolar_xyz = np.zeros((len(df),3))
+    furnsh("scripts/kernels.txt")
+    for i,t in enumerate(tqdm(df.time)):
+        et = spice.datetime2et(t)
+        sun_pos, _, _ = spice.subslr(method='NEAR POINT/ELLIPSOID', target='Mars', et=et, fixref='IAU_MARS', abcorr='NONE', obsrvr='Mars')
+        subsolar_xyz[i] = sun_pos
+        
+    subsolar_xyz = torch.tensor(subsolar_xyz, dtype=torch.float32)
+    _, colat_rad, lon_rad = utils.cartesian_to_spherical(subsolar_xyz[:,0], subsolar_xyz[:,1], subsolar_xyz[:,2])
+    del subsolar_xyz
+    subsolar_lat_lon = torch.vstack((90 - torch.rad2deg(colat_rad), torch.rad2deg(lon_rad))).T
+    print(subsolar_lat_lon)
+    print(f'lat min, max: {subsolar_lat_lon[:,0].min()}, {subsolar_lat_lon[:,0].max()}')
+    print(f'lon min, max: {subsolar_lat_lon[:,1].min()}, {subsolar_lat_lon[:,1].max()}')
+   
+    torch.save(subsolar_lat_lon, 'data/subsolar_lat_lon.pt')
 
+# def make_subsolarlongitude_series_parallel():
+#     df = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['time'])
+#     df = df[:100].copy()
+#     # subsolar_xyz = np.zeros((len(df),3))
+#     furnsh("scripts/kernels.txt")
+#     def compute_subslr(t):
+#         et = spice.datetime2et(t)
+#         sun_pos, _, _ = spice.subslr(method='NEAR POINT/ELLIPSOID', target='Mars', et=et, fixref='IAU_MARS', abcorr='NONE', obsrvr='Mars')
+#         return sun_pos
     
+#     time_chunks = np.array_split(df.time, 7)
+#     time_chunks = [tc.tolist() for tc in time_chunks]
+#     del df
+#     with Pool(7) as pool:
+#         results = pool.map(compute_subslr, time_chunks)
+#     subsolar_xyz = np.array(results)
+#     subsolar_xyz = torch.tensor(subsolar_xyz, dtype=torch.float32)
+#     _, colat_rad, lon_rad = utils.cartesian_to_spherical(subsolar_xyz[:,0], subsolar_xyz[:,1], subsolar_xyz[:,2])
+#     del subsolar_xyz
+#     subsolar_lat_lon = torch.vstack((90 - torch.rad2deg(colat_rad), torch.rad2deg(lon_rad))).T
+#     print(subsolar_lat_lon)
+    # print(f'lat min, max: {subsolar_lat_lon[:,0].min()}, {subsolar_lat_lon[:,0].max()}')
+    # print(f'lon min, max: {subsolar_lat_lon[:,1].min()}, {subsolar_lat_lon[:,1].max()}')
+   
+    # torch.save(subsolar_lat_lon, 'data/subsolar_lat_lon.pt')
 
 
 if __name__ == "__main__":
@@ -87,6 +130,7 @@ if __name__ == "__main__":
     test_format = 0
     test_rotation = 0
     perform_parallel_rot = 0
+    perform_subsolar_longitude_series = 1
 
 
     # execution
@@ -108,4 +152,6 @@ if __name__ == "__main__":
     if perform_parallel_rot:
         parallel_rotate()
 
-   
+    if perform_subsolar_longitude_series:
+        make_subsolarlongitude_series()
+        # make_subsolarlongitude_series_parallel()
