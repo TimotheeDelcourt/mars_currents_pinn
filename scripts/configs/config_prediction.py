@@ -12,8 +12,8 @@ prediction_config = {
     'num_workers': 8,
     'minibatch': 1, 
     'batch_size': 100000, # only used if minibatch is 1
-    'models_dir': '200km/PINN_ext_model_', # inside models/
-    'add_str':'200kmdata', # write '' if nothing to add to file name
+    'models_dir': 'MBFaligned/PINN_ext_model_', # inside models/
+    'add_str':'MBFaligned_wrong', # write '' if nothing to add to file name
 
     # options:
    
@@ -23,7 +23,7 @@ prediction_config = {
     # 'reg_nb':1e11,
 
     # if predict_ensemble = 1
-    'models_start_stop':[1,4],
+    'models_start_stop':[1,13],
 
     # if 'input_type': 'profile'
     'lon' : 90, # MSO longitude in degrees

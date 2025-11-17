@@ -100,20 +100,51 @@ def run_ensemble_training():
 
 
         # MBF and MSO fixed------------------------------------------------------------------------
-        del target, observation_mso, crustal_field_mso, input_xyz
-        print('MBF fixed experiment')
-        input_pc_sph = torch.load('data/position_pc.pt')
-        condition2 = torch.all(torch.isclose(input_sph, input_pc_sph, atol=15), dim=1)
-        condition = condition & condition2
-        input_pc_xyz = utils.spherical_to_cartesian_torch(input_pc_sph[:,0]+3390, 
-                                         90-input_pc_sph[:,1]*np.pi/180, input_pc_sph[:,2]*np.pi/180)
+        # del target, observation_mso, crustal_field_mso, input_xyz
+        # print('MBF fixed experiment')
+        # input_pc_sph = torch.load('data/position_pc.pt')
+        # condition2 = torch.all(torch.isclose(input_sph, input_pc_sph, atol=15), dim=1)
+        # condition = condition & condition2
+        # input_pc_xyz = utils.spherical_to_cartesian_torch(input_pc_sph[:,0]+3390, 
+        #                                  90-input_pc_sph[:,1]*np.pi/180, input_pc_sph[:,2]*np.pi/180)
         
-        input_xyz = input_pc_xyz # replace mso frame by pc frame (input)
-        crustal_field_pc_xyz = torch.load('data/crustal_field_pc_xyz.pt')
-        observation_pc_xyz = torch.load('data/observation_pc_xyz.pt')
-        target = observation_pc_xyz - crustal_field_pc_xyz # replace target in mso frame by target in pc frame
+        # input_xyz = input_pc_xyz # replace mso frame by pc frame (input)
+        # crustal_field_pc_xyz = torch.load('data/crustal_field_pc_xyz.pt')
+        # observation_pc_xyz = torch.load('data/observation_pc_xyz.pt')
+        # target = observation_pc_xyz - crustal_field_pc_xyz # replace target in mso frame by target in pc frame
         # -----------------------------------------------------------------------------------------
 
+        # seasonal constraint----------------------------------------------------------------------
+        # summer: Ls = 90
+        # automn: Ls = 180
+        # winter: Ls = 270
+        # spring: Ls = 0
+        if config.training_config['season_filter'] is not None:
+
+            if config.training_config['season_filter'] == 'summer':
+                target_ls = 90
+            elif config.training_config['season_filter'] == 'winter':
+                target_ls = 270
+            elif config.training_config['season_filter'] == 'spring':
+                target_ls = 0
+            elif config.training_config['season_filter'] == 'autumn':
+                target_ls = 180
+            else:
+                raise ValueError('season_filter must be "summer", "winter", "spring", "autumn" or None')
+            
+            angle_half_band = config.training_config['ls_angle_band']/2
+            print(f'Applying seasonal filter: {config.training_config["season_filter"]} with Ls band of ±{angle_half_band} degrees around Ls={target_ls} degrees')
+            ls = torch.load('data/Ls_series.pt')
+            lower_bound = target_ls - angle_half_band
+            upper_bound = target_ls + angle_half_band
+            lower_bound = lower_bound % 360
+            upper_bound = upper_bound % 360
+            if lower_bound > upper_bound:
+                condition2 = (ls >= lower_bound) | (ls <= upper_bound)
+            else:
+                condition2 = (ls <= upper_bound) & (ls >= lower_bound)
+            condition = condition & condition2
+        # -----------------------------------------------------------------------------------------
         target = target[condition]
 
         if include_alt == True:

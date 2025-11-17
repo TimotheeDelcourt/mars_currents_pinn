@@ -11,6 +11,7 @@ import time
 from multiprocessing import Pool, cpu_count
 # from . import utils
 import utils
+import math
 
 
 
@@ -78,29 +79,34 @@ def pc_sph2cart(position_pc=torch.load('data/position_pc.pt'), field_pc=torch.lo
 
 def make_subsolarlongitude_series(): # in MBF frame
     df = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['time'])
-    df = df[::10000].copy()
-    subsolar_xyz = np.zeros((len(df),3))
-    L_s = np.zeros(len(df))
+    # df = df[::10000].copy()
+    subsolar_lat_lon = torch.zeros((len(df),2),dtype=torch.int16)
+    L_s = torch.zeros(len(df),dtype=torch.int16)
     furnsh("scripts/kernels.txt")
+    round_half = lambda n: math.floor(n + 0.5) if n >= 0 else math.ceil(n - 0.5)
     for i,t in enumerate(tqdm(df.time)):
         et = spice.datetime2et(t)
         sun_pos, _, _ = spice.subslr(method='NEAR POINT/ELLIPSOID', target='Mars', et=et, fixref='IAU_MARS', abcorr='NONE', obsrvr='Mars')
-        subsolar_xyz[i] = sun_pos
-        L_s[i] = spice.lspcn('MARS', et, 'NONE')
+        x,y,z = sun_pos
+        r = np.sqrt(x**2 + y**2 + z**2)
+        lat = 90 - np.rad2deg(np.arccos(z/r))
+        lon = np.rad2deg(np.arctan2(y,x))
+        lat = round_half(lat)
+        lon = round_half(lon)
+        subsolar_lat_lon[i, 0] = lat
+        subsolar_lat_lon[i, 1] = lon
+        L_s[i] = round_half(np.rad2deg(spice.lspcn('MARS', et, 'NONE')))
+    
+    del df
         
-    subsolar_xyz = torch.tensor(subsolar_xyz, dtype=torch.float32)
-    _, colat_rad, lon_rad = utils.cartesian_to_spherical(subsolar_xyz[:,0], subsolar_xyz[:,1], subsolar_xyz[:,2])
-    del subsolar_xyz
-    subsolar_lat_lon = torch.vstack((90 - torch.rad2deg(colat_rad), torch.rad2deg(lon_rad))).T
-    print(subsolar_lat_lon)
-    print(f'lat min, max: {subsolar_lat_lon[:,0].min()}, {subsolar_lat_lon[:,0].max()}')
-    print(f'lon min, max: {subsolar_lat_lon[:,1].min()}, {subsolar_lat_lon[:,1].max()}')
-    L_s = torch.tensor(L_s, dtype=torch.float32)
-    L_s = torch.rad2deg(L_s)
-    print(L_s)
-    print(f'L_s min, max: {L_s.min()}, {L_s.max()}')
-
+    # print(L_s)
+    # print(f'L_s min, max: {L_s.min()}, {L_s.max()}')
     torch.save(L_s, 'data/Ls_series.pt')
+    del L_s
+
+    # print(subsolar_lat_lon)
+    # print(f'lat min, max: {subsolar_lat_lon[:,0].min()}, {subsolar_lat_lon[:,0].max()}')
+    # print(f'lon min, max: {subsolar_lat_lon[:,1].min()}, {subsolar_lat_lon[:,1].max()}')
     torch.save(subsolar_lat_lon, 'data/subsolar_lat_lon.pt')
 
 # def make_subsolarlongitude_series_parallel():
@@ -130,7 +136,6 @@ def make_subsolarlongitude_series(): # in MBF frame
     # torch.save(subsolar_lat_lon, 'data/subsolar_lat_lon.pt')
 
 
-# https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/MATLAB/mice/cspice_lspcn.html
 
 if __name__ == "__main__":
 

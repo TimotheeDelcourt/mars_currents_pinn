@@ -35,5 +35,9 @@ training_config = {
     'altitudes_max':[200,700],# can contain a single value, or start and stop values for random selection
     'nums_neurons_per_layer':[8,20],
     'crop_outlier':[30,40,50,60,70], # can be a list or contain a single value
+
+    # seasonal filter options
+    'season_filter':'summer', # 'summer', 'winter', 'spring', 'autumn' or None
+    'ls_angle_band':60, # degrees
 }
 
