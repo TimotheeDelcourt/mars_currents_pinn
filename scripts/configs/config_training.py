@@ -37,7 +37,7 @@ training_config = {
     'crop_outlier':[30,40,50,60,70], # can be a list or contain a single value
 
     # seasonal filter options
-    'season_filter':'summer', # 'summer', 'winter', 'spring', 'autumn' or None
+    'season_filter':'winter', # 'summer', 'winter', 'spring', 'autumn' or None
     'ls_angle_band':60, # degrees
 }
 
