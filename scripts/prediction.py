@@ -71,7 +71,13 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     # folder_name = f'models/2500km/PINN_ext_all_data_model_'+str(k)
     # folder_name = 'models/PINN_ext_smoothness_reg_'+f'{config.prediction_config["reg_nb"]:.0e}'
 
-    model_params = np.load(folder_name+'/model_params.npy', allow_pickle=True).item()
+    try:
+        model_params = np.load(folder_name+'/model_params.npy', allow_pickle=True).item()
+    except:
+        import json
+        with open(folder_name+'/model_params.json', 'r') as f:
+            model_params = json.load(f)
+
     if model_params['num_inputs'] == 3:
         input = input[:, :3]
 
