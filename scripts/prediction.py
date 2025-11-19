@@ -9,6 +9,7 @@ import pandas as pd
 import warnings
 from curl_function import curl_differentiable
 import importlib.util
+import json
 warnings.filterwarnings("ignore")
 
 if torch.cuda.is_available():
@@ -74,7 +75,6 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     try:
         model_params = np.load(folder_name+'/model_params.npy', allow_pickle=True).item()
     except:
-        import json
         with open(folder_name+'/model_params.json', 'r') as f:
             model_params = json.load(f)
 

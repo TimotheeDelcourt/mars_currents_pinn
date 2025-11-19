@@ -18,12 +18,12 @@ def convert(obj):
         return obj
 
 def convert_npy_to_json():
-    for model in range(15):
+    for model in range(32):
         folder_name = f'../models/PINN_ext_model_{model}'
         try:
-            # if os.path.exists(folder_name+'/model_params.json'):
-            #     print(f'Model {model} JSON already exists, skipping.')
-            #     continue  # JSON already exists, skip conversion
+            if os.path.exists(folder_name+'/model_params.json'):
+                print(f'Model {model} JSON already exists, skipping.')
+                continue  # JSON already exists, skip conversion
             model_params = np.load(folder_name+'/model_params.npy', allow_pickle=True).item()
             model_params = convert(model_params)
             model_params_json = os.path.join(folder_name, 'model_params.json')

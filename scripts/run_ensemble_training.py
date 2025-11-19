@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
 import random
 import utils
-
+import npy2json_sisma as npy2json
 
 while (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
     os.chdir('../')
@@ -178,8 +178,12 @@ def run_ensemble_training():
             'smoothness_lambda': smoothness_lambda,
             'include_alt': include_alt,
         }
-
         np.save(folder_name+'/model_params.npy', model_params)
+
+        model_params_json = npy2json.convert(model_params)
+        with open(folder_name+'/model_params.json', 'w') as f:
+            f.write(model_params_json)
+        
 
         # std_params = (xyz_mean, xyz_std, alt_mean, alt_std)
         # torch.save(std_params, folder_name+'/std_params.pt')
