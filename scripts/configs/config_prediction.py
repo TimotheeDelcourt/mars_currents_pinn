@@ -11,7 +11,7 @@ prediction_config = {
     'num_samples': 900000, # fibonnaci_sphere
     'num_workers': 8,
     'minibatch': 1, 
-    'batch_size': 100000, # only used if minibatch is 1
+    'batch_size': 300000, # only used if minibatch is 1
     'models_dir': 'summer(sisma)/PINN_ext_model_', # inside models/
     'add_str':'summer', # write '' if nothing to add to file name
     # 'models_dir': 'winter(euler)/PINN_ext_model_', # inside models/
@@ -20,7 +20,7 @@ prediction_config = {
     # options:
    
     # if predict_single_model = 1
-    'model_nb':3, # predict_single_model = 1
+    'model_nb':28, # predict_single_model = 1
     'epoch_nb':None, # None = last epoch
     # 'reg_nb':1e11,
 
