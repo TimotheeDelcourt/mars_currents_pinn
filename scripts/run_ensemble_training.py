@@ -11,6 +11,7 @@ import numpy as np
 import random
 import utils
 import npy2json_sisma as npy2json
+import json
 
 while (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
     os.chdir('../')
@@ -182,7 +183,8 @@ def run_ensemble_training():
 
         model_params_json = npy2json.convert(model_params)
         with open(folder_name+'/model_params.json', 'w') as f:
-            f.write(model_params_json)
+            # f.write(model_params_json)
+            json.dump(model_params_json, f)
         
 
         # std_params = (xyz_mean, xyz_std, alt_mean, alt_std)
