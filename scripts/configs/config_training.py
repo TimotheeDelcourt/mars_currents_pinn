@@ -15,7 +15,7 @@ training_config = {
     # 'activation': nn.GELU(),
     # 'activation': Swish(),
     'lossfn': nn.MSELoss(),
-    'ensemble_size': 50,
+    'ensemble_size': 30,
     'bootstrap_counter_start': 1,
     'validation':True,
     'learning_rate': 0.1,
@@ -37,7 +37,7 @@ training_config = {
     'crop_outlier':[30,40,50,60,70], # can be a list or contain a single value
 
     # seasonal filter options
-    'season_filter':'autumn', # 'summer', 'winter', 'spring', 'autumn' or None
+    'season_filter':'spring', # 'summer', 'winter', 'spring', 'autumn' or None
     'ls_angle_band':60, # degrees
 }
 

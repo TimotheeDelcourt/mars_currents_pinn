@@ -12,10 +12,12 @@ prediction_config = {
     'num_workers': 8,
     'minibatch': 1, 
     'batch_size': 300000, # only used if minibatch is 1
-    'models_dir': 'summer(sisma)/PINN_ext_model_', # inside models/
-    'add_str':'summer', # write '' if nothing to add to file name
-    # 'models_dir': 'winter(euler)/PINN_ext_model_', # inside models/
-    # 'add_str':'winter', # write '' if nothing to add to file name
+    # 'models_dir': 'automn(sisma)/PINN_ext_model_', # inside models/
+    # 'add_str':'automn', # write '' if nothing to add to file name
+    # 'models_dir': 'summer(sisma)/PINN_ext_model_', # inside models/
+    # 'add_str':'summer', # write '' if nothing to add to file name
+    'models_dir': 'winter(euler)/PINN_ext_model_', # inside models/
+    'add_str':'winter', # write '' if nothing to add to file name
 
     # options:
    

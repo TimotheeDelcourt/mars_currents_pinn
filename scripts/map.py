@@ -116,8 +116,10 @@ def wind_plot():
 
 if __name__=='__main__':
 
+    if config.wind_map:
+        wind_plot()
+
     if config.all_maps:
         all_maps()
 
-    if config.wind_map:
-        wind_plot()
+    
