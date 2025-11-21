@@ -43,10 +43,14 @@ def one_map(parameter, direction, filetype, save = 1):
         units = 'nA/m2'
 
     if direction == 'total':
-        fill = 0.0
-        for i in ['x','y','z']: #['p','t']
-            fill += (data[parameter+i].values)**2
-        fill = np.sqrt(fill)
+        try:
+            fill = 0.0
+            for i in ['x','y','z']: #['p','t']
+                fill += (data[parameter+i].values)**2
+            fill = np.sqrt(fill)
+        except:
+            fill = data[parameter].values
+
         cmap = 'imola'
         reverse_bool = False
     else:
@@ -121,5 +125,8 @@ if __name__=='__main__':
 
     if config.all_maps:
         all_maps()
+
+    if config.only_B:
+        one_map('B','total',config.map_config['filetype'])
 
     
