@@ -99,22 +99,6 @@ def run_ensemble_training():
 
         condition = (input_sph[:,0] <= alt_max) & torch.all((target <= lim) & (target >= -lim), dim=1)
 
-
-        # MBF and MSO fixed------------------------------------------------------------------------
-        # del target, observation_mso, crustal_field_mso, input_xyz
-        # print('MBF fixed experiment')
-        # input_pc_sph = torch.load('data/position_pc.pt')
-        # condition2 = torch.all(torch.isclose(input_sph, input_pc_sph, atol=15), dim=1)
-        # condition = condition & condition2
-        # input_pc_xyz = utils.spherical_to_cartesian_torch(input_pc_sph[:,0]+3390, 
-        #                                  90-input_pc_sph[:,1]*np.pi/180, input_pc_sph[:,2]*np.pi/180)
-        
-        # input_xyz = input_pc_xyz # replace mso frame by pc frame (input)
-        # crustal_field_pc_xyz = torch.load('data/crustal_field_pc_xyz.pt')
-        # observation_pc_xyz = torch.load('data/observation_pc_xyz.pt')
-        # target = observation_pc_xyz - crustal_field_pc_xyz # replace target in mso frame by target in pc frame
-        # -----------------------------------------------------------------------------------------
-
         # seasonal constraint----------------------------------------------------------------------
         # summer: Ls = 90
         # automn: Ls = 180
@@ -146,6 +130,23 @@ def run_ensemble_training():
                 condition2 = (ls <= upper_bound) & (ls >= lower_bound)
             condition = condition & condition2
         # -----------------------------------------------------------------------------------------
+
+        # crustal field condition------------------------------------------------------------------
+        if config.training_config['curstal_field_condition'] is not None:
+            limit = config.training_config['crustal_field_limit']
+            total_field = torch.sqrt(crustal_field_mso[:,0]**2 + crustal_field_mso[:,1]**2 + crustal_field_mso[:,2]**2)
+            if config.training_config['curstal_field_condition'] == 'low':
+                condition3 = total_field <= limit
+                print(f'Applying crustal field condition: low crustal field regions with total crustal field ≤ {limit} nT')
+            elif config.training_config['curstal_field_condition'] == 'high':
+                condition3 = total_field >= limit
+                print(f'Applying crustal field condition: high crustal field regions with total crustal field ≥ {limit} nT')
+            else:
+                raise ValueError('curstal_field_condition must be "low", "high" or None')
+            condition = condition & condition3
+        # -----------------------------------------------------------------------------------------
+
+
         target = target[condition]
 
         if include_alt == True:

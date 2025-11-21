@@ -37,7 +37,11 @@ training_config = {
     'crop_outlier':[30,40,50,60,70], # can be a list or contain a single value
 
     # seasonal filter options
-    'season_filter':'spring', # 'summer', 'winter', 'spring', 'autumn' or None
-    'ls_angle_band':60, # degrees
+    'season_filter':'summer', # 'summer', 'winter', 'spring', 'autumn' or None
+    'ls_angle_band':300, # degrees; default = 60; all data except peak dust storm season = 300
+
+    # curstal field condition
+    'curstal_field_condition':'low', # low field, high field regions, or none (=all)
+    'crustal_field_limit':10, # nT
 }
 
