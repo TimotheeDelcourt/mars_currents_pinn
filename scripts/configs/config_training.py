@@ -41,7 +41,7 @@ training_config = {
     'ls_angle_band':300, # degrees; default = 60; all data except peak dust storm season = 300
 
     # curstal field condition
-    'curstal_field_condition':'low', # low field, high field regions, or none (=all)
+    'curstal_field_condition':'high', # low field, high field regions, or none (=all)
     'crustal_field_limit':10, # nT
 }
 
