@@ -20,8 +20,10 @@ prediction_config = {
     # 'add_str':'winter', # write '' if nothing to add to file name
     # 'models_dir': 'spring(euler)/PINN_ext_model_', # inside models/
     # 'add_str':'spring', # write '' if nothing to add to file name
-    'models_dir': 'low_crustal_field_regions(sisma)/PINN_ext_model_', # inside models/
-    'add_str':'low_crustal_field_regions', # write '' if nothing to add to file name
+    # 'models_dir': 'low_crustal_field_regions(sisma)/PINN_ext_model_', # inside models/
+    # 'add_str':'low_crustal_field_regions', # write '' if nothing to add to file name
+    'models_dir': 'high_crustal_field_regions(sisma)/PINN_ext_model_', # inside models/
+    'add_str':'high_crustal_field_regions', # write '' if nothing to add to file name
 
     
 
@@ -33,7 +35,7 @@ prediction_config = {
     # 'reg_nb':1e11,
 
     # if predict_ensemble = 1
-    'models_start_stop':[1,25],
+    'models_start_stop':[1,10],
 
     # if 'input_type': 'profile'
     'lon' : 90, # MSO longitude in degrees

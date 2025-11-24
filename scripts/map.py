@@ -50,7 +50,7 @@ def one_map(parameter, direction, filetype, save = 1):
             fill = np.sqrt(fill)
         except:
             fill = data[parameter].values
-
+        series = [0,25]
         cmap = 'imola'
         reverse_bool = False
     else:
