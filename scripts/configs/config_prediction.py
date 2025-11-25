@@ -35,7 +35,7 @@ prediction_config = {
     # 'reg_nb':1e11,
 
     # if predict_ensemble = 1
-    'models_start_stop':[1,10],
+    'models_start_stop':[1,21],
 
     # if 'input_type': 'profile'
     'lon' : 90, # MSO longitude in degrees
