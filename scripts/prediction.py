@@ -34,7 +34,7 @@ def generate_input_profiles():
     lon_value = np.deg2rad(config.prediction_config['lon'])
 
     colat_i = torch.linspace(start = 0, end = torch.pi, steps = n, dtype=torch.float32)
-    alt_max = config.prediction_config['alt_max']
+    alt_max = config.prediction_config['alt_max_profile']
     r_i = torch.linspace(start = 3393.5, end = 3393.5+alt_max, steps = n, dtype=torch.float32)
     colat, r = torch.meshgrid(colat_i, r_i)
     colat = colat.flatten()
@@ -46,6 +46,48 @@ def generate_input_profiles():
     lon_deg = torch.rad2deg(lon)
     df = pd.DataFrame({'alt':r-3393.5, 'lat':lat_deg.numpy(), 'lon':lon_deg.numpy()})
     return df, input_tensor
+
+def generate_input_data():
+    season = config.prediction_config['season']
+    if season == 'summer':
+        target_ls = 90
+    elif season == 'winter':
+        target_ls = 270
+    elif season == 'spring':
+        target_ls = 0
+    elif season  == 'autumn':
+        target_ls = 180
+    elif season == 'summer_autumn':
+        target_ls = 135
+    elif season == 'autumn_winter':
+        target_ls = 225
+    elif season == 'winter_spring':
+        target_ls = 315
+    elif season == 'spring_summer':
+        target_ls = 45
+    else:
+        raise ValueError('season_filter must be "summer", "winter", "spring", "autumn" or None')
+    angle_half_band = 30
+    ls = torch.load('data/Ls_series.pt')
+    lower_bound = target_ls - angle_half_band
+    upper_bound = target_ls + angle_half_band
+    lower_bound = lower_bound % 360
+    upper_bound = upper_bound % 360
+    if lower_bound > upper_bound:
+        condition1 = (ls >= lower_bound) | (ls <= upper_bound)
+    else:
+        condition1 = (ls <= upper_bound) & (ls >= lower_bound)
+
+    input_sph = torch.load('data/position_mso_spherical.pt')
+    condition2 = (input_sph[:,0] <= config.prediction_config['alt_max_data'])
+    del input_sph
+    condition = condition1 & condition2
+    input_xyz = torch.load('data/position_mso.pt')[condition]
+    df = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['alt', 'lat', 'lon'])[condition.numpy()]
+    # print(input_xyz.shape)
+    # print(df.shape)
+    # print(df)
+    return df, input_xyz
  
 def choose_input_type():
     input_type_str = config.prediction_config['input_type']
@@ -53,6 +95,8 @@ def choose_input_type():
         df, input_tensor = generate_input_fibonacci()
     elif input_type_str == 'profile':
         df, input_tensor = generate_input_profiles()
+    elif input_type_str == 'data':
+        df, input_tensor = generate_input_data()
     else:
         print('Please select a valid input type in config_prediction.py')
         return
@@ -196,43 +240,43 @@ def predict_ensemble():
     J_mean = J_sum / n_models  
     J_std = torch.sqrt((J_sum_sq / n_models) - J_mean.pow(2))
 
-    df['Bx'] = B_mean[:,0]
-    df['By'] = B_mean[:,1]
-    df['Bz'] = B_mean[:,2]
-    df['Jx'] = J_mean[:,0]
-    df['Jy'] = J_mean[:,1]
-    df['Jz'] = J_mean[:,2]
+    # df['Bx'] = B_mean[:,0]
+    # df['By'] = B_mean[:,1]
+    # df['Bz'] = B_mean[:,2]
+    # df['Jx'] = J_mean[:,0]
+    # df['Jy'] = J_mean[:,1]
+    # df['Jz'] = J_mean[:,2]
 
-    df['Bx_std'] = B_std[:,0]
-    df['By_std'] = B_std[:,1]
-    df['Bz_std'] = B_std[:,2]
-    df['Jx_std'] = J_std[:,0]
-    df['Jy_std'] = J_std[:,1]
-    df['Jz_std'] = J_std[:,2]
+    # df['Bx_std'] = B_std[:,0]
+    # df['By_std'] = B_std[:,1]
+    # df['Bz_std'] = B_std[:,2]
+    # df['Jx_std'] = J_std[:,0]
+    # df['Jy_std'] = J_std[:,1]
+    # df['Jz_std'] = J_std[:,2]
 
     Br, Bt, Bp = utils.field_cart_to_spher(B_mean[:,0], B_mean[:,1], B_mean[:,2],
-                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+                                        lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
     df['Br'] = Br
     df['Bt'] = Bt
     df['Bp'] = Bp
     del Br, Bt, Bp
     
     Jr, Jt, Jp = utils.field_cart_to_spher(J_mean[:,0], J_mean[:,1], J_mean[:,2],
-                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+                                        lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
     df['Jr'] = Jr
     df['Jt'] = Jt
     df['Jp'] = Jp
     del Jr, Jt, Jp
 
     Br_std, Bt_std, Bp_std = utils.field_cart_to_spher(B_std[:,0], B_std[:,1], B_std[:,2],
-                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+                                        lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
     df['Br_std'] = Br_std
     df['Bt_std'] = Bt_std
     df['Bp_std'] = Bp_std
     del Br_std, Bt_std, Bp_std
     
     Jr_std, Jt_std, Jp_std = utils.field_cart_to_spher(J_std[:,0], J_std[:,1], J_std[:,2],
-                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+                                        lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
     df['Jr_std'] = Jr_std
     df['Jt_std'] = Jt_std
     df['Jp_std'] = Jp_std
@@ -244,8 +288,11 @@ def predict_ensemble():
     if input_type_str == 'fibonacci':
         df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_{config.prediction_config['alt']}km_fibonacci{add_str}.csv", index=False)
     elif input_type_str == 'profile':
-        alt_max = config.prediction_config['alt_max']
+        alt_max = config.prediction_config['alt_max_profile']
         df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_lon_{config.prediction_config['lon']}deg_profile{add_str}_{alt_max}km.csv", index=False)
+    elif input_type_str == 'data':
+        alt_max = config.prediction_config['alt_max_data']
+        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}{add_str}_data_{alt_max}km.csv", index=False)
     print(df)
 
 
@@ -253,16 +300,16 @@ def predict_single():
     df, input_tensor, input_type_str = choose_input_type()
 
     B, J = predict(input_tensor, k = config.prediction_config['model_nb'])
-    df['Bx'] = B[:,0].to('cpu').detach()
-    df['By'] = B[:,1].to('cpu').detach()
-    df['Bz'] = B[:,2].to('cpu').detach()
-    df['Jx'] = J[:,0].to('cpu').detach()
-    df['Jy'] = J[:,1].to('cpu').detach()
-    df['Jz'] = J[:,2].to('cpu').detach()
+    # df['Bx'] = B[:,0].to('cpu').detach()
+    # df['By'] = B[:,1].to('cpu').detach()
+    # df['Bz'] = B[:,2].to('cpu').detach()
+    # df['Jx'] = J[:,0].to('cpu').detach()
+    # df['Jy'] = J[:,1].to('cpu').detach()
+    # df['Jz'] = J[:,2].to('cpu').detach()
     Br, Bt, Bp = utils.field_cart_to_spher(B[:,0], B[:,1], B[:,2],
-                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+                                        lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
     Jr, Jt, Jp = utils.field_cart_to_spher(J[:,0], J[:,1], J[:,2],
-                                        lat_deg = df['lat'], lon_deg = df['lon'], device = device)
+                                        lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
     df['Br'] = Br.to('cpu').detach()
     df['Bt'] = Bt.to('cpu').detach()
     df['Bp'] = Bp.to('cpu').detach()
