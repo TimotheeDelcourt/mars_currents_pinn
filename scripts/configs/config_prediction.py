@@ -16,14 +16,16 @@ prediction_config = {
     # 'add_str':'automn', # write '' if nothing to add to file name
     # 'models_dir': 'summer(sisma)/PINN_ext_model_', # inside models/
     # 'add_str':'summer', # write '' if nothing to add to file name
-    # 'models_dir': 'winter(euler)/PINN_ext_model_', # inside models/
-    # 'add_str':'winter', # write '' if nothing to add to file name
-    'models_dir': 'spring/PINN_ext_model_', # inside models/
-    'add_str':'spring', # write '' if nothing to add to file name
+    'models_dir': 'winter(euler)/PINN_ext_model_', # inside models/
+    'add_str':'winter', # write '' if nothing to add to file name
+    # 'models_dir': 'spring(euler)/PINN_ext_model_', # inside models/
+    # 'add_str':'spring', # write '' if nothing to add to file name
     # 'models_dir': 'low_crustal_field_regions(sisma)/PINN_ext_model_', # inside models/
     # 'add_str':'low_crustal_field_regions', # write '' if nothing to add to file name
     # 'models_dir': 'high_crustal_field_regions(sisma)/PINN_ext_model_', # inside models/
     # 'add_str':'high_crustal_field_regions', # write '' if nothing to add to file name
+    # 'models_dir': 'summer_autumn/PINN_ext_model_', # inside models/
+    # 'add_str':'summer_autumn', # write '' if nothing to add to file name
 
     
 
@@ -35,7 +37,7 @@ prediction_config = {
     # 'reg_nb':1e11,
 
     # if predict_ensemble = 1
-    'models_start_stop':[1,30],
+    'models_start_stop':[1,35],
 
     # if 'input_type': 'profile'
     'lon' : 90, # MSO longitude in degrees
@@ -45,6 +47,6 @@ prediction_config = {
     'alt': 150,
 
     # if 'input_type': 'data'
-    'season':'spring',
+    'season':'winter',
     'alt_max_data':500,
 }

@@ -136,7 +136,6 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     spec_config.loader.exec_module(config_training_module)
     training_config = config_training_module.training_config
 
-    # std_params = torch.load(folder_name+'/std_params.pt')
     # troubleshoot -------------------------------------------------------------------
     # (that's because the randomly selected num_neurons_per_layer were not recorded)
     # for num_neurons_per_layer in range(7,11):
@@ -286,13 +285,13 @@ def predict_ensemble():
     if add_str != '':
         add_str = '_'+add_str
     if input_type_str == 'fibonacci':
-        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_{config.prediction_config['alt']}km_fibonacci{add_str}.csv", index=False)
+        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{n_models}_{config.prediction_config['alt']}km_fibonacci{add_str}.csv", index=False)
     elif input_type_str == 'profile':
         alt_max = config.prediction_config['alt_max_profile']
-        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}_lon_{config.prediction_config['lon']}deg_profile{add_str}_{alt_max}km.csv", index=False)
+        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{n_models}_lon_{config.prediction_config['lon']}deg_profile{add_str}_{alt_max}km.csv", index=False)
     elif input_type_str == 'data':
         alt_max = config.prediction_config['alt_max_data']
-        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{k_stop}{add_str}_data_{alt_max}km.csv", index=False)
+        df.to_csv(f"predictions/data/PINN_MSO_ensemble_models_{k_start}to{n_models}{add_str}_data_{alt_max}km.csv", index=False)
     print(df)
 
 

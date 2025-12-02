@@ -45,7 +45,7 @@ def one_map(parameter, direction, filetype, save = 1):
     if direction == 'total':
         try:
             fill = 0.0
-            for i in ['x','y','z']: #['p','t']
+            for i in ['r','p','t']: #['x','y','z']: #
                 fill += (data[parameter+i].values)**2
             fill = np.sqrt(fill)
         except:
