@@ -16,7 +16,7 @@ if torch.cuda.is_available():
     device = torch.device('cuda')
 else:
     device = 'cpu'
-# print('Working on device: ', device)
+print('Working on device: ', device)
 
 # while os.path.basename(os.getcwd()) != 'project':
 #     os.chdir('../')
