@@ -102,7 +102,7 @@ def choose_input_type():
         return
     return df, input_tensor, input_type_str
 
-def predict(input, k , minibatch=config.prediction_config['minibatch']):
+def predict(input, k , minibatch=config.prediction_config['minibatch'],models_dir = config.prediction_config['models_dir'],verbose=True):
     '''
     Input must be a torch tensor of shape (n,4) with columns: X,Y,Z [km], alt [km]
     k: int, number of the bootstrap model to use.
@@ -111,7 +111,7 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     '''
     # Load model -----------------------------------------------
  
-    models_dir = config.prediction_config['models_dir']
+    
     folder_name = 'models/'+models_dir+str(k)
     # folder_name = f'models/2500km/PINN_ext_all_data_model_'+str(k)
     # folder_name = 'models/PINN_ext_smoothness_reg_'+f'{config.prediction_config["reg_nb"]:.0e}'
@@ -130,7 +130,8 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     neuralnets_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(neuralnets_module)
     NeuralNet = neuralnets_module.NeuralNet_indep
-    print('Imported neuralnets from', folder_name)
+    if verbose:
+        print('Imported neuralnets from', folder_name)
     spec_config = importlib.util.spec_from_file_location("config_training", folder_name+"/config_training.py")
     config_training_module = importlib.util.module_from_spec(spec_config)
     spec_config.loader.exec_module(config_training_module)
@@ -141,7 +142,7 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
     # for num_neurons_per_layer in range(7,11):
     #     try:
     model = NeuralNet(
-                num_hidden_layers=1,#training_config['num_hidden_layers'],
+                num_hidden_layers=training_config['num_hidden_layers'],
                 num_neurons_per_layer=model_params['num_neurons_per_layer'],#training_config['num_neurons_per_layer'],
                 xyz_mean=model_params['xyz_mean'],
                 xyz_std=model_params['xyz_std'],
@@ -180,7 +181,8 @@ def predict(input, k , minibatch=config.prediction_config['minibatch']):
         J_pred = torch.zeros(n,3)
         dataloader = torch.utils.data.DataLoader(input, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
         indexloader = torch.utils.data.DataLoader(torch.arange(n), batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
-        print('Starting minibatch prediction')
+        if verbose:
+            print('Starting minibatch prediction')
         for batch, index in zip(dataloader, indexloader):
             input_batch = batch.to(device).requires_grad_(True)
             A_pred_batch = model(input_batch)
@@ -214,10 +216,12 @@ def predict_ensemble():
     J_sum = None  
     J_sum_sq = None
     n_models = 0
-
-    for i, model in enumerate(range(k_start, k_stop+1)):
+    from tqdm import tqdm
+    models = tqdm(range(k_start, k_stop+1))
+    for i, model in enumerate(models):
+    # for i, model in enumerate(range(k_start, k_stop+1)):
         try:
-            B, J = predict(input_tensor, model)
+            B, J = predict(input_tensor, model,verbose=False)
             if B_sum is None:
                 B_sum = B.clone()
                 B_sum_sq = B.pow(2)
@@ -229,9 +233,12 @@ def predict_ensemble():
                 J_sum += J
                 J_sum_sq += J.pow(2)
             n_models += 1
+            models.set_postfix_str(f'Model {model} successfully computed')
         except:
-            print('failed')
+            # print('failed')
+            models.set_postfix_str(f'Model {model} failed')
             continue
+        
 
     # Calculate statistics
     B_mean = B_sum / n_models
@@ -329,7 +336,93 @@ def predict_single():
     print(df)
 
 
+def predict_first_neuron():
+    df, input, _ = choose_input_type()
+    k = config.prediction_config['model_nb']
+    minibatch=config.prediction_config['minibatch']
 
+    # Load model -----------------------------------------------
+    models_dir = config.prediction_config['models_dir']
+    folder_name = 'models/'+models_dir+str(k)
+    # folder_name = f'models/2500km/PINN_ext_all_data_model_'+str(k)
+    # folder_name = 'models/PINN_ext_smoothness_reg_'+f'{config.prediction_config["reg_nb"]:.0e}'
+
+    try:
+        model_params = np.load(folder_name+'/model_params.npy', allow_pickle=True).item()
+    except:
+        with open(folder_name+'/model_params.json', 'r') as f:
+            model_params = json.load(f)
+
+    if model_params['num_inputs'] == 3:
+        input = input[:, :3]
+
+    # Load the script as a module
+    spec = importlib.util.spec_from_file_location("neuralnets", folder_name+"/neuralnets.py")
+    neuralnets_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(neuralnets_module)
+    NeuralNet = neuralnets_module.NeuralNet_indep
+    print('Imported neuralnets from', folder_name)
+    spec_config = importlib.util.spec_from_file_location("config_training", folder_name+"/config_training.py")
+    config_training_module = importlib.util.module_from_spec(spec_config)
+    spec_config.loader.exec_module(config_training_module)
+    training_config = config_training_module.training_config
+
+    model = NeuralNet(
+                num_hidden_layers=training_config['num_hidden_layers'],
+                num_neurons_per_layer=model_params['num_neurons_per_layer'],#training_config['num_neurons_per_layer'],
+                xyz_mean=model_params['xyz_mean'],
+                xyz_std=model_params['xyz_std'],
+                alt_mean=model_params['alt_mean'],
+                alt_std=model_params['alt_std'],
+                num_inputs=model_params['num_inputs'],
+                activation=training_config['activation'])
+    file_name = folder_name+"/models/model_val_min.pt"
+    network = torch.load(file_name, map_location=device)
+    model.load_state_dict(network)
+
+    # hook first neuron of first layer -------------------------
+    first_layer_output = {}
+    def hook_fn(_module, _input, output):
+        first_layer_output['act'] = output
+    handle = model.network_x[0].register_forward_hook(hook_fn)
+
+
+
+    # Predict --------------------------------------------------
+    if minibatch == 0:
+        input = input.to(device).requires_grad_(True)
+        _ = model(input)
+        first_neuron_values = first_layer_output['act'][:, :8]
+        
+        
+    elif minibatch == 1:
+        num_workers = config.prediction_config['num_workers']
+        batch_size = config.prediction_config['batch_size']
+        n = len(input)
+        first_neuron_values = torch.zeros(n,8)
+        dataloader = torch.utils.data.DataLoader(input, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+        indexloader = torch.utils.data.DataLoader(torch.arange(n), batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+        print('Starting minibatch prediction')
+        for batch, index in zip(dataloader, indexloader):
+            input_batch = batch.to(device).requires_grad_(True)
+            _ = model(input_batch)
+            first_neuron_values_batch = first_layer_output['act'][:, :8]
+            first_neuron_values[index] = first_neuron_values_batch.to('cpu').detach()
+
+            del input_batch, first_neuron_values_batch
+
+    # print(first_neuron_values)
+    # print(first_neuron_values.shape)
+    for i in range(8):
+        df['neuron'+str(i)] = first_neuron_values[:,i]
+    # print(f'Min : {torch.min(first_neuron_values):1f}, max : {torch.max(first_neuron_values):1f}')
+    print(df)
+    add_str = config.prediction_config['add_str']
+    if add_str != '':
+        add_str = '_'+add_str
+    df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_{config.prediction_config['alt']}km_fibonacci{add_str}_neuronoutput.csv", index=False)
+            
+    
 
 
 
@@ -343,5 +436,7 @@ if __name__ == '__main__':
     if config.predict_single_model:
         predict_single()
 
+    if config.predict_single_neuron:
+        predict_first_neuron()
 
-    # generate_input_profiles()
+

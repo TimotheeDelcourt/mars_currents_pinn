@@ -116,7 +116,36 @@ def wind_plot():
 
     fig.savefig(pathoutput+'/J_total_wind.png', dpi = 300)
 
+def neuron_maps():
+    filetype = config.map_config['filetype']
+    model_name = config.map_config['model_name']
+    pathinput = 'predictions/'+model_name+'.csv'
+    data = pd.read_csv(pathinput, header=0)
+    pathoutput = 'maps/'+model_name
+    os.makedirs(pathoutput, exist_ok=True)
+    for i in range(8):
+        fig = pygmt.Figure()
+        region = [-180, 180, -90, 90]
+        projection = "N12c"
+        frame = ["xafg90","yafg60"]
+        pygmt.config(FONT_ANNOT_PRIMARY='16p')
+        fill = data[f'neuron{i}'].values
+        series = [-8,8]
+        # series = [min(fill),max(fill)]
+        # if abs(max(fill)+min(fill)) >= 4:
+            # cmap = 'lajolla'
+            # reverse_bool = True
+        # else:
+        cmap = 'vik'
+        reverse_bool = False
 
+        pygmt.makecpt(cmap=cmap, reverse = reverse_bool, series= series)
+        fig.plot(x=data['lon'].values, y=data['lat'].values, style="c0.03c", fill=fill, cmap=True, region=region, projection=projection)
+        fig.basemap(region=region, projection=projection, frame=frame)
+        pygmt.makecpt(cmap=cmap, reverse = reverse_bool, background="o+t", series= series)
+        fig.colorbar(frame=["x+lNeuron Output"],position="JBC+o0c/1c")
+        fig.savefig(pathoutput+f'/neuron{i}'+filetype, dpi = 300)
+    
 
 if __name__=='__main__':
 
@@ -128,5 +157,8 @@ if __name__=='__main__':
 
     if config.only_B:
         one_map('B','total',config.map_config['filetype'])
+
+    if config.neuron:
+        neuron_maps()
 
     

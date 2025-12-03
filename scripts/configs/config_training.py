@@ -19,10 +19,10 @@ training_config = {
     'bootstrap_counter_start': 1,
     'validation':True,
     'learning_rate': 0.1,
-    'num_hidden_layers':2,
+    'num_hidden_layers':1,
     'random_parameters':True, # NOT including alt as input
     'sample_with_replacement':False,
-    'add_folder_str':'_2HL', # leave '' if nothing to add to the folder name
+    'add_folder_str':'', # leave '' if nothing to add to the folder name
 
     # pre-determined parameters
     'altitude_max':600,
