@@ -16,7 +16,7 @@ if torch.cuda.is_available():
     device = torch.device('cuda')
 else:
     device = 'cpu'
-print('Working on device: ', device)
+# print('Working on device: ', device)
 
 # while os.path.basename(os.getcwd()) != 'project':
 #     os.chdir('../')
@@ -47,8 +47,8 @@ def generate_input_profiles():
     df = pd.DataFrame({'alt':r-3393.5, 'lat':lat_deg.numpy(), 'lon':lon_deg.numpy()})
     return df, input_tensor
 
-def generate_input_data():
-    season = config.prediction_config['season']
+def generate_input_data(season = config.prediction_config['season']):
+    
     if season == 'summer':
         target_ls = 90
     elif season == 'winter':
@@ -89,20 +89,20 @@ def generate_input_data():
     # print(df)
     return df, input_xyz
  
-def choose_input_type():
+def choose_input_type(season=None):
     input_type_str = config.prediction_config['input_type']
     if input_type_str == 'fibonacci':
         df, input_tensor = generate_input_fibonacci()
     elif input_type_str == 'profile':
         df, input_tensor = generate_input_profiles()
     elif input_type_str == 'data':
-        df, input_tensor = generate_input_data()
+        df, input_tensor = generate_input_data(season)
     else:
         print('Please select a valid input type in config_prediction.py')
         return
     return df, input_tensor, input_type_str
 
-def predict(input, k , minibatch=config.prediction_config['minibatch'],models_dir = config.prediction_config['models_dir'],verbose=True):
+def predict(input, k , minibatch=config.prediction_config['minibatch'],verbose=True,season=None):
     '''
     Input must be a torch tensor of shape (n,4) with columns: X,Y,Z [km], alt [km]
     k: int, number of the bootstrap model to use.
@@ -110,8 +110,11 @@ def predict(input, k , minibatch=config.prediction_config['minibatch'],models_di
     device = GPU if minibatch = 0, else CPU.
     '''
     # Load model -----------------------------------------------
- 
-    
+    if (config.prediction_config['input_type'] == 'data'):
+        models_dir = season+'/PINN_ext_model_'
+    else:
+        models_dir = config.prediction_config['models_dir']
+
     folder_name = 'models/'+models_dir+str(k)
     # folder_name = f'models/2500km/PINN_ext_all_data_model_'+str(k)
     # folder_name = 'models/PINN_ext_smoothness_reg_'+f'{config.prediction_config["reg_nb"]:.0e}'
@@ -203,9 +206,9 @@ def predict(input, k , minibatch=config.prediction_config['minibatch'],models_di
 
 
 
-def predict_ensemble():
+def predict_ensemble(season=None):
 
-    df, input_tensor, input_type_str = choose_input_type()
+    df, input_tensor, input_type_str = choose_input_type(season)
 
 
     k_start = config.prediction_config['models_start_stop'][0]
@@ -221,7 +224,7 @@ def predict_ensemble():
     for i, model in enumerate(models):
     # for i, model in enumerate(range(k_start, k_stop+1)):
         try:
-            B, J = predict(input_tensor, model,verbose=False)
+            B, J = predict(input_tensor, model,verbose=False,season=season)
             if B_sum is None:
                 B_sum = B.clone()
                 B_sum_sq = B.pow(2)
@@ -298,8 +301,8 @@ def predict_ensemble():
         df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{n_models}_lon_{config.prediction_config['lon']}deg_profile{add_str}_{alt_max}km.csv", index=False)
     elif input_type_str == 'data':
         alt_max = config.prediction_config['alt_max_data']
-        df.to_csv(f"predictions/data/PINN_MSO_ensemble_models_{k_start}to{n_models}{add_str}_data_{alt_max}km.csv", index=False)
-    print(df)
+        df.to_csv(f"predictions/data/PINN_MSO_ensemble_models_{k_start}to{n_models}_{season}_data_{alt_max}km.csv", index=False)
+    # print(df)
 
 
 def predict_single():
@@ -431,7 +434,16 @@ if __name__ == '__main__':
 
   
     if config.predict_ensemble:
-        predict_ensemble()
+        if (config.prediction_config['input_type'] == 'data'):
+            if isinstance(config.prediction_config['season'],int):
+                seasons = [config.prediction_config['season']]
+            else:
+                seasons = config.prediction_config['season']
+            for season in seasons:
+                print('Computing '+season)
+                predict_ensemble(season)
+        else:
+            predict_ensemble()
 
     if config.predict_single_model:
         predict_single()

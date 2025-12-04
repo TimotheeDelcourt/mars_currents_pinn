@@ -14,7 +14,10 @@ prediction_config = {
     'minibatch': 1, 
     'batch_size': 300000, # only used if minibatch is 1
 
-    # if None:
+
+    'models_dir': None, # may leave as None if input_type = data (season below will provide the path)
+    'add_str': '', #
+
     # 'models_dir': 'summer(sisma)/PINN_ext_model_', # inside models/
     # 'add_str':'summer', # write '' if nothing to add to file name
     # 'models_dir': 'summer_autumn/PINN_ext_model_', # inside models/
@@ -29,8 +32,8 @@ prediction_config = {
     # 'add_str':'winter_spring', # write '' if nothing to add to file name
     # 'models_dir': 'spring(euler)/PINN_ext_model_', # inside models/
     # 'add_str':'spring', # write '' if nothing to add to file name
-    'models_dir': 'spring_summer/PINN_ext_model_', # inside models/
-    'add_str':'spring_summer', # write '' if nothing to add to file name
+    # 'models_dir': 'spring_summer/PINN_ext_model_', # inside models/
+    # 'add_str':'spring_summer', # write '' if nothing to add to file name
 
     # 'models_dir': 'low_crustal_field_regions(sisma)/PINN_ext_model_', # inside models/
     # 'add_str':'low_crustal_field_regions', # write '' if nothing to add to file name
@@ -39,6 +42,7 @@ prediction_config = {
     
     # 'models_dir': 'summer_2HL/PINN_ext_model_', # inside models/
     # 'add_str':'summer_2HL', # write '' if nothing to add to file name
+
 
     
 
@@ -62,6 +66,6 @@ prediction_config = {
     'alt': 150,
 
     # if 'input_type': 'data'
-    'season':'spring_summer',
+    'season':['summer_autumn', 'autumn_winter', 'winter_spring', 'spring_summer'],
     'alt_max_data':500,
 }
