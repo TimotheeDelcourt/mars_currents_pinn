@@ -8,15 +8,15 @@ predict_single_neuron = 0 # will use arguments of predict_single_model = 1
 
 
 prediction_config = {
-    'input_type': 'data', # 'fibonacci', 'profile', or 'data'
+    'input_type': 'fibonacci', # 'fibonacci', 'profile', or 'data'
     'num_samples': 900000, # fibonnaci_sphere
     'num_workers': 8,
     'minibatch': 1, 
     'batch_size': 300000, # only used if minibatch is 1
 
 
-    'models_dir': None, # may leave as None if input_type = data (season below will provide the path)
-    'add_str': '', #
+    # 'models_dir': None, # may leave as None if input_type = data (season below will provide the path)
+    # 'add_str': '', #
 
     # 'models_dir': 'summer(sisma)/PINN_ext_model_', # inside models/
     # 'add_str':'summer', # write '' if nothing to add to file name
@@ -28,8 +28,8 @@ prediction_config = {
     # 'add_str':'autumn_winter', # write '' if nothing to add to file name
     # 'models_dir': 'winter(euler)/PINN_ext_model_', # inside models/
     # 'add_str':'winter', # write '' if nothing to add to file name
-    # 'models_dir': 'winter_spring/PINN_ext_model_', # inside models/
-    # 'add_str':'winter_spring', # write '' if nothing to add to file name
+    'models_dir': 'winter_spring/PINN_ext_model_', # inside models/
+    'add_str':'winter_spring', # write '' if nothing to add to file name
     # 'models_dir': 'spring(euler)/PINN_ext_model_', # inside models/
     # 'add_str':'spring', # write '' if nothing to add to file name
     # 'models_dir': 'spring_summer/PINN_ext_model_', # inside models/

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import warnings
-import utils
+import scripts.utils.utils as utils
 from curl_function import curl_differentiable
 warnings.filterwarnings("ignore")
 

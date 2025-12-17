@@ -3,7 +3,7 @@ import imageio.v3 as iio
 import matplotlib.pyplot as plt
 import cmcrameri.cm as cmc
 
-def gray_scale(image,vmin=0,vmax=1):
+def img2scalar_nocmap(image,vmin=0,vmax=1):
     '''This function must be used when the colormap of the original figure is not known.
     "Image" should be a path (e.g., "./figure.png")'''
     img = iio.imread(image)
@@ -11,7 +11,7 @@ def gray_scale(image,vmin=0,vmax=1):
     data = vmin + data * (vmax - vmin) # denormalize to match vmin and vmax
     return data
 
-def img2scalar(image,cmap,vmin=0,vmax=1):
+def img2scalar_cmap(image,cmap,vmin=0,vmax=1):
     '''This function must be used when the colormap of the original figure is known.
     "Image" should be a path (e.g., "./figure.png"), and cmap simply a str.'''
     try:

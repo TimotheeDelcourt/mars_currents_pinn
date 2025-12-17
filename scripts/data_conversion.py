@@ -10,7 +10,7 @@ import spiceypy as spice
 import time
 from multiprocessing import Pool, cpu_count
 # from . import utils
-import utils
+import scripts.utils.utils as utils
 import math
 
 

@@ -5,3 +5,4 @@ models/*
 maps/*
 predictions/*
 figures/*
+scripts/bin/*

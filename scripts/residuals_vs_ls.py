@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 import random
 import warnings
 warnings.filterwarnings("ignore")
-import utils as ut
+import scripts.utils.utils as ut
 from season_mask import get_condition
 import cmcrameri.cm as cmc
-from img_data_extractor import gray_scale, img2scalar
+from scripts.utils.img_data_extractor import gray_scale, img2scalar
 
 # RMSE vs LS
 

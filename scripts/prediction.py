@@ -3,7 +3,7 @@ import torch.utils
 import torch.utils.data
 import configs.config_prediction as config
 import numpy as np
-import utils
+import scripts.utils.utils as utils
 import os
 import pandas as pd
 import warnings
@@ -210,14 +210,17 @@ def predict_ensemble(season=None):
 
     df, input_tensor, input_type_str = choose_input_type(season)
 
+    df['x'] = input_tensor[:,0]
+    df['y'] = input_tensor[:,1]
+    df['z'] = input_tensor[:,2]
 
     k_start = config.prediction_config['models_start_stop'][0]
     k_stop  = config.prediction_config['models_start_stop'][1]
 
     B_sum = None
-    B_sum_sq = None
+    # B_sum_sq = None
     J_sum = None  
-    J_sum_sq = None
+    # J_sum_sq = None
     n_models = 0
     from tqdm import tqdm
     models = tqdm(range(k_start, k_stop+1))
@@ -227,14 +230,14 @@ def predict_ensemble(season=None):
             B, J = predict(input_tensor, model,verbose=False,season=season)
             if B_sum is None:
                 B_sum = B.clone()
-                B_sum_sq = B.pow(2)
+                # B_sum_sq = B.pow(2)
                 J_sum = J.clone()
-                J_sum_sq = J.pow(2)
+                # J_sum_sq = J.pow(2)
             else:
                 B_sum += B
-                B_sum_sq += B.pow(2)
+                # B_sum_sq += B.pow(2)
                 J_sum += J
-                J_sum_sq += J.pow(2)
+                # J_sum_sq += J.pow(2)
             n_models += 1
             models.set_postfix_str(f'Model {model} successfully computed')
         except:
@@ -245,16 +248,16 @@ def predict_ensemble(season=None):
 
     # Calculate statistics
     B_mean = B_sum / n_models
-    B_std = torch.sqrt((B_sum_sq / n_models) - B_mean.pow(2))
+    # B_std = torch.sqrt((B_sum_sq / n_models) - B_mean.pow(2))
     J_mean = J_sum / n_models  
-    J_std = torch.sqrt((J_sum_sq / n_models) - J_mean.pow(2))
+    # J_std = torch.sqrt((J_sum_sq / n_models) - J_mean.pow(2))
 
-    # df['Bx'] = B_mean[:,0]
-    # df['By'] = B_mean[:,1]
-    # df['Bz'] = B_mean[:,2]
-    # df['Jx'] = J_mean[:,0]
-    # df['Jy'] = J_mean[:,1]
-    # df['Jz'] = J_mean[:,2]
+    df['Bx'] = B_mean[:,0]
+    df['By'] = B_mean[:,1]
+    df['Bz'] = B_mean[:,2]
+    df['Jx'] = J_mean[:,0]
+    df['Jy'] = J_mean[:,1]
+    df['Jz'] = J_mean[:,2]
 
     # df['Bx_std'] = B_std[:,0]
     # df['By_std'] = B_std[:,1]
@@ -277,19 +280,19 @@ def predict_ensemble(season=None):
     df['Jp'] = Jp
     del Jr, Jt, Jp
 
-    Br_std, Bt_std, Bp_std = utils.field_cart_to_spher(B_std[:,0], B_std[:,1], B_std[:,2],
-                                        lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
-    df['Br_std'] = Br_std
-    df['Bt_std'] = Bt_std
-    df['Bp_std'] = Bp_std
-    del Br_std, Bt_std, Bp_std
+    # Br_std, Bt_std, Bp_std = utils.field_cart_to_spher(B_std[:,0], B_std[:,1], B_std[:,2],
+    #                                     lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
+    # df['Br_std'] = Br_std
+    # df['Bt_std'] = Bt_std
+    # df['Bp_std'] = Bp_std
+    # del Br_std, Bt_std, Bp_std
     
-    Jr_std, Jt_std, Jp_std = utils.field_cart_to_spher(J_std[:,0], J_std[:,1], J_std[:,2],
-                                        lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
-    df['Jr_std'] = Jr_std
-    df['Jt_std'] = Jt_std
-    df['Jp_std'] = Jp_std
-    del Jr_std, Jt_std, Jp_std
+    # Jr_std, Jt_std, Jp_std = utils.field_cart_to_spher(J_std[:,0], J_std[:,1], J_std[:,2],
+    #                                     lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
+    # df['Jr_std'] = Jr_std
+    # df['Jt_std'] = Jt_std
+    # df['Jp_std'] = Jp_std
+    # del Jr_std, Jt_std, Jp_std
 
     add_str = config.prediction_config['add_str']
     if add_str != '':
