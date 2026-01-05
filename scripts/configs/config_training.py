@@ -15,7 +15,7 @@ training_config = {
     # 'activation': nn.GELU(),
     # 'activation': Swish(),
     'lossfn': nn.MSELoss(),
-    'ensemble_size': 5,
+    'ensemble_size': 3,
     'bootstrap_counter_start': 1,
     'validation':True,
     'learning_rate': 0.1,
