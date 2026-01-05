@@ -26,11 +26,16 @@ def run_ensemble_training():
     #     seasons = [seasons]
     ls_list = config.training_config['ls_list']
 
-    for ls in ls_list:
-        print(f'LS: {ls} degrees')
+    for target_ls in ls_list:
+        print(f'LS: {target_ls} degrees')
 
         # Bootstrap iteration---------------------------------------------
-        for _ in range(config.training_config['ensemble_size']):
+        if target_ls == 11.25:
+            ensemble_size = 2
+        else:
+            ensemble_size = config.training_config['ensemble_size']
+
+        for _ in range(ensemble_size):
         # for smoothness_lambda in [1e6,1e7,1e8]:
         # for smoothness_lambda in [1e9,1e10,1e11]:
 
@@ -112,7 +117,6 @@ def run_ensemble_training():
 
             # seasonal constraint----------------------------------------------------------------------
             # 2026/05/01 update, only consider Ls values from now on, no "seasons":
-            target_ls = ls
             # commented out block below ------------
             # if config.training_config['season_filter'] is not None:
             #     if season == 'summer':
