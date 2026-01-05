@@ -135,7 +135,7 @@ def run_ensemble_training():
             #         raise ValueError('season_filter must be "summer", "winter", "spring", "autumn" or None')
             # shifted left below --------------------
             angle_half_band = config.training_config['ls_angle_band']/2
-            print(f'Applying seasonal filter: {config.training_config["season_filter"]} with Ls band of ±{angle_half_band} degrees around Ls={target_ls} degrees')
+            # print(f'Applying seasonal filter: {config.training_config["season_filter"]} with Ls band of ±{angle_half_band} degrees around Ls={target_ls} degrees')
             ls = torch.load('data/Ls_series.pt')
             lower_bound = target_ls - angle_half_band
             upper_bound = target_ls + angle_half_band
