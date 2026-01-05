@@ -9,8 +9,8 @@ from neuralnets import NeuralNet_indep
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
 import random
-import scripts.utils.utils as utils
-import scripts.utils.npy2json_sisma as npy2json
+# import utils.utils as utils
+import utils.npy2json_sisma as npy2json
 import json
 
 while (os.path.basename(os.getcwd()) != 'mars_currents_pinn'):
