@@ -145,6 +145,8 @@ def neuron_maps():
         pygmt.makecpt(cmap=cmap, reverse = reverse_bool, background="o+t", series= series)
         fig.colorbar(frame=["x+lNeuron Output"],position="JBC+o0c/1c")
         fig.savefig(pathoutput+f'/neuron{i}'+filetype, dpi = 300)
+
+
     
 
 if __name__=='__main__':

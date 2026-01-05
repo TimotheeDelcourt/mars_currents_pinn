@@ -7,7 +7,7 @@ import random
 import warnings
 warnings.filterwarnings("ignore")
 import scripts.utils.utils as ut
-from season_mask import get_condition
+from scripts.utils.season_mask import get_condition
 import cmcrameri.cm as cmc
 from scripts.utils.img_data_extractor import gray_scale, img2scalar
 

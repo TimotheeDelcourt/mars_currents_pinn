@@ -1,6 +1,6 @@
 import numpy as np
 
-def mso2lt_lat(ls):
+def mso2lt_matrix(ls):
     '''
     Rotation matrix from MSO to (LT, MBF_lat) cartesian frame at a given Ls (degrees). Lon = 0 corresponds to noon.
     Returns a 3x3 numpy array.
@@ -32,3 +32,5 @@ def mso2lt_lat(ls):
     assert np.allclose(R @ z_mso, s), "Rotation matrix does not rotate s to z_mso"
 
     return R.T # passive rotation, rotating the coordinate system
+
+

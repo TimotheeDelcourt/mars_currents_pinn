@@ -44,13 +44,22 @@ def spherical_to_cartesian_np(r, colat, lon):
     z = r*np.cos(colat)
     return x, y, z
 
-def cartesian_to_spherical(x, y, z):
+def cartesian_to_spherical_torch(x, y, z):
     '''input units: x, y, z in km or m
     output units: r like input, colat in radian, lon in radian
     '''
     r = torch.sqrt(x**2 + y**2 + z**2)
     colat = torch.acos(z/r)
     lon = torch.atan2(y,x)
+    return r, colat, lon
+
+def cartesian_to_spherical_np(x, y, z):
+    '''input units: x, y, z in km or m
+    output units: r like input, colat in radian, lon in radian
+    '''
+    r = np.sqrt(x**2 + y**2 + z**2)
+    colat = np.arccos(z/r)
+    lon = np.arctan2(y,x)
     return r, colat, lon
 
 def tensorize(t):
@@ -130,7 +139,7 @@ def preprocess_input(input_tensor, std_params, coord = 'cartesian'):
     processed_input = standardize(processed_input, std_params['mean_input'], std_params['std_input'])
     return processed_input
 
-def field_cart_to_spher(Bx,By,Bz,lat_deg=None, lon_deg=None,colat_rad=None,lon_rad=None,device=None):
+def field_cart_to_spher_torch(Bx,By,Bz,lat_deg=None, lon_deg=None,colat_rad=None,lon_rad=None,device=None):
     '''Converts magnetic field components from cartesian to spherical coordinates. '''
     if (colat_rad is None) & (lon_rad is None):
         try:
@@ -148,6 +157,22 @@ def field_cart_to_spher(Bx,By,Bz,lat_deg=None, lon_deg=None,colat_rad=None,lon_r
     Br = Bx*torch.sin(colat)*torch.cos(lon) + By*torch.sin(colat)*torch.sin(lon) + Bz*torch.cos(colat)
     Bt = Bx*torch.cos(colat)*torch.cos(lon) + By*torch.cos(colat)*torch.sin(lon) - Bz*torch.sin(colat)
     Bp = -Bx*torch.sin(lon) + By*torch.cos(lon)
+    return Br, Bt, Bp
+
+def field_cart_to_spher_np(Bx,By,Bz,lat_deg=None, lon_deg=None,colat_rad=None,lon_rad=None):
+    '''Converts magnetic field components from cartesian to spherical coordinates. '''
+    if (colat_rad is None) & (lon_rad is None):
+        try:
+            colat_rad = np.pi/2 - np.radians(lat_deg)
+            lon_rad = np.radians(lon_deg)
+        except:
+            print('Please provide (co-)latitude and longitude')
+            return
+    colat= colat_rad
+    lon = lon_rad
+    Br = Bx*np.sin(colat)*np.cos(lon) + By*np.sin(colat)*np.sin(lon) + Bz*np.cos(colat)
+    Bt = Bx*np.cos(colat)*np.cos(lon) + By*np.cos(colat)*np.sin(lon) - Bz*np.sin(colat)
+    Bp = -Bx*np.sin(lon) + By*np.cos(lon)
     return Br, Bt, Bp
 
 

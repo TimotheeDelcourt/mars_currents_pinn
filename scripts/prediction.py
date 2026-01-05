@@ -3,7 +3,7 @@ import torch.utils
 import torch.utils.data
 import configs.config_prediction as config
 import numpy as np
-import scripts.utils.utils as utils
+import utils.utils as utils
 import os
 import pandas as pd
 import warnings

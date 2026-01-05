@@ -28,12 +28,12 @@ prediction_config = {
     # 'add_str':'autumn_winter', # write '' if nothing to add to file name
     # 'models_dir': 'winter(euler)/PINN_ext_model_', # inside models/
     # 'add_str':'winter', # write '' if nothing to add to file name
-    'models_dir': 'winter_spring/PINN_ext_model_', # inside models/
-    'add_str':'winter_spring', # write '' if nothing to add to file name
+    # 'models_dir': 'winter_spring/PINN_ext_model_', # inside models/
+    # 'add_str':'winter_spring', # write '' if nothing to add to file name
     # 'models_dir': 'spring(euler)/PINN_ext_model_', # inside models/
     # 'add_str':'spring', # write '' if nothing to add to file name
-    # 'models_dir': 'spring_summer/PINN_ext_model_', # inside models/
-    # 'add_str':'spring_summer', # write '' if nothing to add to file name
+    'models_dir': 'spring_summer/PINN_ext_model_', # inside models/
+    'add_str':'spring_summer', # write '' if nothing to add to file name
 
     # 'models_dir': 'low_crustal_field_regions(sisma)/PINN_ext_model_', # inside models/
     # 'add_str':'low_crustal_field_regions', # write '' if nothing to add to file name

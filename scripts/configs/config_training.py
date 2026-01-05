@@ -15,7 +15,7 @@ training_config = {
     # 'activation': nn.GELU(),
     # 'activation': Swish(),
     'lossfn': nn.MSELoss(),
-    'ensemble_size': 5,
+    'ensemble_size': 10,
     'bootstrap_counter_start': 1,
     'validation':True,
     'learning_rate': 0.1,
@@ -38,7 +38,9 @@ training_config = {
     'crop_outlier':[30,40,50,60,70], # can be a list or contain a single value
 
     # seasonal filter options
-    'season_filter':'summer', # if list, will iterate over all options; options: 'summer', 'winter', 'spring', 'autumn', None, 'summer_autumn', 'autumn_winter', 'winter_spring', 'spring_summer'
+    # 2026/05/01 update, only consider Ls values from now on, no "seasons"
+    # 'season_filter':None, # if list, will iterate over all options; options: 'summer', 'winter', 'spring', 'autumn', None, 'summer_autumn', 'autumn_winter', 'winter_spring', 'spring_summer'
+    'ls_list': [11.25, 33.75, 56.25, 78.75, 101.25, 123.75, 146.25, 168.75, 191.25, 213.75, 236.25, 258.75, 281.25, 303.75, 326.25, 348.75], # 'season_filter' must be not None to use this
     'ls_angle_band':60, # degrees; default = 60; all data except peak dust storm season = 300
 
     # curstal field condition
