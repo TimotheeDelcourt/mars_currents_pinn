@@ -6,3 +6,5 @@ maps/*
 predictions/*
 figures/*
 scripts/bin/*
+__pycache__/
+*.pyc
