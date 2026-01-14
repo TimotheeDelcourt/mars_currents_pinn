@@ -6,16 +6,24 @@ import matplotlib.pyplot as plt
 import random
 import warnings
 warnings.filterwarnings("ignore")
-import scripts.utils.utils as ut
-from scripts.utils.season_mask import get_condition
+import utils.utils as ut
+from utils.data_masks import get_seasons_condition
 import cmcrameri.cm as cmc
-from scripts.utils.img_data_extractor import gray_scale, img2scalar
+from utils.img_data_extractor import img2scalar_nocmap, img2scalar_cmap
 
-# RMSE vs LS
+import datetime
+import math
 
+def earth_date_to_mars_year(target_date):
+    assert isinstance(target_date, datetime.datetime), "Input must be a datetime.datetime object"
+    reference_date = datetime.datetime(1955, 4, 11)
+    days_since_reference = (target_date - reference_date).total_seconds()/86400.0
+    mars_year_length = 686.971  # Earth days
+    mars_year  = int(days_since_reference // mars_year_length) + 1
+    return mars_year 
 
-def compute_seasonal_mse(season):
-    condition = get_condition(season)
+def compute_seasonal_mse(season, dust_mask=False):
+    condition = get_seasons_condition(season)
     observation_mso = torch.load('data/observation_mso.pt')[condition]
     crustal_field_mso = torch.load('data/crustal_field_mso.pt')[condition]
     target = observation_mso - crustal_field_mso
@@ -27,22 +35,50 @@ def compute_seasonal_mse(season):
         prediction_df = pd.read_csv(f'predictions/data/PINN_MSO_ensemble_models_1to31_{season}_data_500km.csv',usecols=['Br','Bt','Bp'])
     B_pred = np.sqrt(prediction_df['Br'].values**2 + prediction_df['Bt'].values**2 + prediction_df['Bp'].values**2)
     del prediction_df
-    mse = np.mean((B_obs-B_pred)**2)
-    print(f'MSE = {mse:.1f}')
+
+    if dust_mask:
+        condition = condition.numpy()
+        # df_dust = pd.read_csv('data/dust/1-s2.0-S001910352030405X-mmc4.csv')
+        df_dust = pd.DataFrame({'MY': [32, 34, 34, 35, 36, 36], 'ls1': [220, 185, 320, 220, 215, 310], 'ls2': [250, 280, 350, 280, 280, 350]})
+        df_time = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['time'])[condition]
+        print(min(df_time.time), max(df_time.time))
+        mars_years = np.array([earth_date_to_mars_year(dt) for dt in df_time.time])
+        print(min(mars_years), max(mars_years))
+        ls = torch.load('data/Ls_series.pt')[condition].numpy()
+        for i,line in enumerate(df_dust.itertuples()):
+            condition_tmp = (mars_years == line.MY) & (ls >= line.ls1) & (ls <= line.ls2)
+            if i == 0:
+                condition_dust = condition_tmp
+            else:
+                condition_dust = condition_dust | condition_tmp
+        print(f'Percentage of "dusty" data {100*sum(condition_dust)/len(condition_dust)}')
+        B_obs_dust, B_pred_dust = B_obs[condition_dust], B_pred[condition_dust]
+        mse_dust = np.mean((B_obs_dust-B_pred_dust)**2)
+        B_obs_quiet, B_pred_quiet = B_obs[~condition_dust], B_pred[~condition_dust]
+        mse_quiet = np.mean((B_obs_quiet-B_pred_quiet)**2)
+        print(f'dust MSE = {mse_dust:.1f}')
+        print(f'quiet MSE = {mse_quiet:.1f}')
+        return mse_quiet
+
+    mse = np.mean((B_obs_quiet-B_pred_quiet)**2)
+    print(f'{season} MSE = {mse:.1f}')
     return mse
 
-def compute_mse_list(save=0):
+def compute_mse_list(save=0, dust_mask = False):
     seasons_str = ['spring','spring_summer','summer','summer_autumn','autumn','autumn_winter','winter','winter_spring']
     mses = []
     for season in seasons_str:
-        mses.append(compute_seasonal_mse(season))
+        mses.append(compute_seasonal_mse(season, dust_mask=dust_mask))
         print(season+' computed')
     if save:
-        np.save('figures/residuals/mses.npy',np.array(mses))
+        if dust_mask:
+            np.save('figures/residuals/mses_dustmasked.npy',np.array(mses))
+        else:
+            np.save('figures/residuals/mses.npy',np.array(mses))
     return mses
 
 
-def wrapped_plot(mses=np.load('figures/residuals/mses.npy'),s=4,save=0):
+def wrapped_plot(mses=np.load('figures/residuals/mses.npy'),s=4,save=0, dust_mask = False):
     seasons_str = ['spring','spring_summer','summer','summer_autumn','autumn','autumn_winter','winter','winter_spring']
     seasons_ls = list(np.arange(0, 360, 45))
     def wrap(x):
@@ -57,13 +93,24 @@ def wrapped_plot(mses=np.load('figures/residuals/mses.npy'),s=4,save=0):
     rmse = np.sqrt(mses_2)
 
     plt.figure()
-    plt.plot(seasons_ls_2[s:s+8],rmse[s:s+8],color='k')
+    if dust_mask:
+        mses_dust = np.load('figures/residuals/mses_dustmasked.npy')
+        rmses_dust = np.sqrt(wrap(mses_dust))
+        plt.plot(seasons_ls_2[s:s+8],rmses_dust[s:s+8],color='darkgrey',label='Dust events masked',linestyle='--')
+        plt.scatter(seasons_ls_2[s:s+8],rmses_dust[s:s+8],color='darkgrey')
+        plt.legend(loc=1)
+
+    plt.plot(seasons_ls_2[s:s+8],rmse[s:s+8],color='k',label='All data')
     plt.scatter(seasons_ls_2[s:s+8],rmse[s:s+8],color='k')
+
     plt.xticks(seasons_ls_2[s:s+8:2],season_str_2[s:s+8:2])
     plt.ylabel('RMSE (nT)')
     plt.grid(axis = 'x')
     if save:
-        plt.savefig(f'figures/residuals/RMSEvsSeason.png', dpi=300)
+        if dust_mask:
+            plt.savefig(f'figures/residuals/RMSEvsSeason_dust.png', dpi=300)
+        else:
+            plt.savefig(f'figures/residuals/RMSEvsSeason.png', dpi=300)
     else:
         plt.show()
 
@@ -75,10 +122,10 @@ def cdod_vs_ls_grey(mses=np.load('figures/residuals/mses.npy'),save=0,colorbar=0
         if ls == 0:
             img1 = 'figures/residuals/dust_storms/corrected/ls0_1.png'
             img2 = 'figures/residuals/dust_storms/corrected/ls0_2.png'
-            data = 1-np.mean([np.median(gray_scale(img1)),np.median(gray_scale(img2))])
+            data = 1-np.mean([np.median(img2scalar_nocmap(img1)),np.median(img2scalar_nocmap(img2))])
         else:
             img = f'figures/residuals/dust_storms/corrected/ls{ls}.png'
-            data = 1-np.median(gray_scale(img))
+            data = 1-np.median(img2scalar_nocmap(img))
         cdod.append(data)
      
     p = np.corrcoef(mses, cdod)[0,1]
@@ -108,10 +155,10 @@ def cdod_vs_ls_cmap(mses=np.load('figures/residuals/mses.npy'),save=0,colorbar=0
         if ls == 0:
             img1 = 'figures/residuals/dust_storms/corrected/ls0_1.png'
             img2 = 'figures/residuals/dust_storms/corrected/ls0_2.png'
-            data = np.mean([np.median(img2scalar(img1,cmap='YlOrBr')),np.median(img2scalar(img2,cmap='YlOrBr'))])
+            data = np.mean([np.median(img2scalar_cmap(img1,cmap='YlOrBr')),np.median(img2scalar_cmap(img2,cmap='YlOrBr'))])
         else:
             img = f'figures/residuals/dust_storms/corrected/ls{ls}.png'
-            data = np.median(img2scalar(img,cmap='YlOrBr'))
+            data = np.median(img2scalar_cmap(img,cmap='YlOrBr'))
         cdod.append(data)
      
     p = np.corrcoef(mses, cdod)[0,1]
@@ -136,7 +183,9 @@ if __name__=='__main__':
     dummy=0
     # compute_mse_list(1)
     # wrapped_plot()
-    cdod_vs_ls_grey(save=0,colorbar=1)
-    cdod_vs_ls_cmap(save=0,colorbar=1)
+    # cdod_vs_ls_grey(save=0,colorbar=1)
+    # cdod_vs_ls_cmap(save=0,colorbar=1)
 
-    
+    # compute_seasonal_mse('spring',dust_mask=True)
+    # compute_mse_list(save=1, dust_mask=True)
+    wrapped_plot(save = 1, dust_mask=True)

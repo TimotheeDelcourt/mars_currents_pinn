@@ -7,7 +7,7 @@ import numpy as np
 # import numpy as np
 # import geopandas as gpd
 
-warnings.filterwarnings("ignore")
+# warnings.filterwarnings("ignore")
 
 #fontsize
 pygmt.config(FONT_ANNOT_PRIMARY='16p')
@@ -40,7 +40,7 @@ def one_map(parameter, direction, filetype, save = 1):
         series = [-20,20]
         cmap = 'vik'
         reverse_bool = False
-        units = 'nA/m2'
+        units = 'nA/m^2'
 
     if direction == 'total':
         try:
@@ -50,7 +50,8 @@ def one_map(parameter, direction, filetype, save = 1):
             fill = np.sqrt(fill)
         except:
             fill = data[parameter].values
-        series = [0,25]
+        series = [0,23]
+        # series = [np.log10(i) for i in series]
         cmap = 'imola'
         reverse_bool = False
     else:
@@ -65,15 +66,17 @@ def one_map(parameter, direction, filetype, save = 1):
     pathoutput += add_txt
     os.makedirs(pathoutput, exist_ok=True)
 
-    # plot upper layer
     pygmt.makecpt(cmap=cmap, reverse = reverse_bool, series= series)
     fig.plot(x=data['lon'].values, y=data['lat'].values, style="c0.03c", fill=fill, cmap=True, region=region, projection=projection)
    
     fig.basemap(region=region, projection=projection, frame=frame)
     pygmt.makecpt(cmap=cmap, reverse = reverse_bool, background="o+t", series= series)
-    fig.colorbar(frame=["x+l"+label+f" [{units}]"],position="JBC+o0c/1c")
+    if label == 'Jtotal':
+        fig.colorbar(frame=["x"],position="JBC+o0c/1c")
+    else:
+        fig.colorbar(frame=["x+l"+label+f" [{units}]"],position="JBC+o0c/1c")
     if save == 1:
-        fig.savefig(pathoutput+'/'+label+filetype, dpi = 300)
+        fig.savefig(pathoutput+'/'+label+filetype, dpi = 1200)
     else:
         return pathoutput, data, fig
 
@@ -113,8 +116,8 @@ def wind_plot():
     pen="0.4p",
     # fill="red3",
     )
-
-    fig.savefig(pathoutput+'/J_total_wind.png', dpi = 300)
+    file_type = config.map_config['filetype']
+    fig.savefig(pathoutput+'/J_total_wind'+file_type, dpi = 1200)
 
 def neuron_maps():
     filetype = config.map_config['filetype']
@@ -151,16 +154,25 @@ def neuron_maps():
 
 if __name__=='__main__':
 
-    if config.wind_map:
-        wind_plot()
+    # if config.wind_map:
+    #     wind_plot()
 
-    if config.all_maps:
-        all_maps()
+    # if config.all_maps:
+    #     all_maps()
 
-    if config.only_B:
-        one_map('B','total',config.map_config['filetype'])
+    # if config.only_B:
+    #     one_map('B','total',config.map_config['filetype'])
 
-    if config.neuron:
-        neuron_maps()
+    # if config.neuron:
+    #     neuron_maps()
 
     
+    fig = pygmt.Figure()
+    region = [-180, 180, -90, 90]
+    projection = "N12c"
+    frame = ["xafg90","yafg60"]
+    pygmt.config(FONT_ANNOT_PRIMARY='16p')
+    fig.basemap(region=region, projection=projection, frame=frame)
+    pygmt.makecpt(cmap='imola', background="o+t", series= [0,100])
+    fig.colorbar(frame=["x"],position="JBC+o0c/1c")
+    fig.savefig('maps/empty_map_colorbar.pdf')

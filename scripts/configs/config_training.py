@@ -15,7 +15,7 @@ training_config = {
     # 'activation': nn.GELU(),
     # 'activation': Swish(),
     'lossfn': nn.MSELoss(),
-    'ensemble_size': 9,
+    'ensemble_size': 15,
     'bootstrap_counter_start': 1,
     'validation':True,
     'learning_rate': 0.1,
@@ -43,8 +43,8 @@ training_config = {
     # sisma:
     # 'ls_list': [11.25, 33.75, 56.25, 78.75, 101.25, 123.75, 146.25, 168.75, 191.25, 213.75, 236.25, 258.75, 281.25, 303.75, 326.25, 348.75], # 'season_filter' must be not None to use this
     # euler:
-    'ls_list': [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5],
-    'ls_angle_band':60, # degrees; default = 60; all data except peak dust storm season = 300
+    'ls_list': None, #[22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5],
+    'ls_angle_band':None,#60, # degrees; default = 60; all data except peak dust storm season = 300
 
     # curstal field condition
     'curstal_field_condition':None, # low field, high field regions, or none (=all)

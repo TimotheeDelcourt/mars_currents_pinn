@@ -25,6 +25,8 @@ def run_ensemble_training():
     # if not isinstance(seasons, list):
     #     seasons = [seasons]
     ls_list = config.training_config['ls_list']
+    if ls_list == None:
+        ls_list = [None]
 
     for target_ls in ls_list:
         print(f'LS: {target_ls} degrees')
@@ -51,7 +53,10 @@ def run_ensemble_training():
             # Make folder-------------------------------------------------
             counter = config.training_config['bootstrap_counter_start']
             add_str  = config.training_config['add_folder_str']
-            base_folder_name = f'models/ls{target_ls}'+add_str+'/PINN_ext_model_'
+            if target_ls == None:
+                base_folder_name = f'models/all_year'+add_str+'/PINN_ext_model_'
+            else:
+                base_folder_name = f'models/ls{target_ls}'+add_str+'/PINN_ext_model_'
             # Keep creating new folders with incremented names until one with a unique name is found
             while True:
                 folder_name = base_folder_name+str(counter)
@@ -138,18 +143,19 @@ def run_ensemble_training():
             #     else:
             #         raise ValueError('season_filter must be "summer", "winter", "spring", "autumn" or None')
             # shifted left below --------------------
-            angle_half_band = config.training_config['ls_angle_band']/2
-            # print(f'Applying seasonal filter: {config.training_config["season_filter"]} with Ls band of ±{angle_half_band} degrees around Ls={target_ls} degrees')
-            ls = torch.load('data/Ls_series.pt')
-            lower_bound = target_ls - angle_half_band
-            upper_bound = target_ls + angle_half_band
-            lower_bound = lower_bound % 360
-            upper_bound = upper_bound % 360
-            if lower_bound > upper_bound:
-                condition2 = (ls >= lower_bound) | (ls <= upper_bound)
-            else:
-                condition2 = (ls <= upper_bound) & (ls >= lower_bound)
-            condition = condition & condition2
+            if target_ls is not None:
+                angle_half_band = config.training_config['ls_angle_band']/2
+                # print(f'Applying seasonal filter: {config.training_config["season_filter"]} with Ls band of ±{angle_half_band} degrees around Ls={target_ls} degrees')
+                ls = torch.load('data/Ls_series.pt')
+                lower_bound = target_ls - angle_half_band
+                upper_bound = target_ls + angle_half_band
+                lower_bound = lower_bound % 360
+                upper_bound = upper_bound % 360
+                if lower_bound > upper_bound:
+                    condition2 = (ls >= lower_bound) | (ls <= upper_bound)
+                else:
+                    condition2 = (ls <= upper_bound) & (ls >= lower_bound)
+                condition = condition & condition2
             # -----------------------------------------------------------------------------------------
 
             # crustal field condition------------------------------------------------------------------

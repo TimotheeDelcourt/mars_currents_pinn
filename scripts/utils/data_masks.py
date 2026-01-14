@@ -3,7 +3,7 @@ import torch
 
 
 
-def get_condition(season = 'summer'):
+def get_seasons_condition(season = 'summer'):
     if season == 'summer':
         target_ls = 90
     elif season == 'winter':
