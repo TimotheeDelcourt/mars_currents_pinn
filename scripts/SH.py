@@ -4,7 +4,7 @@ import pandas as pd
 from multiprocessing import Pool
 
 
-import maps
+# import maps
 
 def deg2km(lmax):
     radius = 3393.5
@@ -15,14 +15,24 @@ def deg2km(lmax):
 
 
 
+# def expand_chunk(coeffs,points):
+#     assert isinstance(coeffs, sh.SHMagCoeffs)
+#     r_chunk = points[:,0]
+#     colat_chunk = points[:,1]
+#     lon_chunk = points[:,2]
+#     colat_chunk[colat_chunk == 0] = 1e-4  # Avoid division by zero in spherical harmonics expansion
+#     colat_chunk[colat_chunk == np.pi] = np.pi - 1e-4  # Avoid division by zero in spherical harmonics expansion
+#     expanded_chunk = coeffs.expand(colat = colat_chunk, lon = lon_chunk, degrees=False, r = r_chunk*1000)
+#     return expanded_chunk
+
 def expand_chunk(coeffs,points):
-    assert isinstance(coeffs, sh.SHMagCoeffs)
-    r_chunk = points[:,0]
+    assert isinstance(coeffs, sh.SHCoeffs)
+    # r_chunk = points[:,0]
     colat_chunk = points[:,1]
     lon_chunk = points[:,2]
     colat_chunk[colat_chunk == 0] = 1e-4  # Avoid division by zero in spherical harmonics expansion
     colat_chunk[colat_chunk == np.pi] = np.pi - 1e-4  # Avoid division by zero in spherical harmonics expansion
-    expanded_chunk = coeffs.expand(colat = colat_chunk, lon = lon_chunk, degrees=False, r = r_chunk*1000)
+    expanded_chunk = coeffs.expand(colat = colat_chunk, lon = lon_chunk, degrees=False)#, r = r_chunk*1000)
     return expanded_chunk
 
 
@@ -41,10 +51,11 @@ if __name__=='__main__':
 
     season = 'winter'  # 'spring', 'autumn', None, 'summer', 'winter'
 
-    coeffs = sh.SHMagCoeffs.from_file(f'crustal_field_model/PINN2025_rotation_avg_{season}.sh')
+    # coeffs = sh.SHMagCoeffs.from_file(f'crustal_field_model/PINN2025_rotation_avg_{season}_real.sh')
+    coeffs = sh.SHCoeffs.from_file(f'crustal_field_model/PINN2025_rotation_avg_{season}_real.sh')
 
    
-    input_reg = pd.read_csv('predictions/PINN_MSO_ensemble_models_1to11_150km_fibonacci_summer.csv')
+    input_reg = pd.read_csv('predictions/PINN_MSO_ensemble_models_1to30_150km_fibonacci_summer.csv')
     input_reg = input_reg[['alt','lat','lon']]
     r = np.array(input_reg['alt']) + 3393.5
     lon = np.deg2rad(input_reg['lon'])
@@ -60,13 +71,16 @@ if __name__=='__main__':
     
     with Pool(num_cpus) as pool:
         expansion = pool.map(expand_chunk_wrapper, entries)
-    expansion = np.concatenate(expansion, axis=0)  # Flatten results
+    # expansion = np.concatenate(expansion, axis=0)  # Flatten results
+    expansion = np.concatenate(expansion)  # Flatten results
 
-    input_reg['Br'] = expansion[:,0]
-    input_reg['Bt'] = expansion[:,1]
-    input_reg['Bp'] = expansion[:,2]
-    input_reg['B'] = np.sqrt(expansion[:,0]**2 + expansion[:,1]**2 + expansion[:,2]**2)
+    # input_reg['Br'] = expansion[:,0]
+    # input_reg['Bt'] = expansion[:,1]
+    # input_reg['Bp'] = expansion[:,2]
+    # input_reg['B'] = np.sqrt(expansion[:,0]**2 + expansion[:,1]**2 + expansion[:,2]**2)
+
+    input_reg['B'] = expansion
 
     
-    input_reg.to_csv(f'predictions/crustal_field_rotation_avg_{season}_150km_fibonacci.csv', index=False)
+    input_reg.to_csv(f'predictions/crustal_field_rotation_avg_{season}_150km_fibonacci_real.csv', index=False)
 

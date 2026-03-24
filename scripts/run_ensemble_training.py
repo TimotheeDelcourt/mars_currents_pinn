@@ -53,10 +53,23 @@ def run_ensemble_training():
             # Make folder-------------------------------------------------
             counter = config.training_config['bootstrap_counter_start']
             add_str  = config.training_config['add_folder_str']
-            if target_ls == None:
-                base_folder_name = f'models/all_year'+add_str+'/PINN_ext_model_'
+            # if target_ls == None:
+            #     base_folder_name = f'models/all_year'+add_str+'/PINN_ext_model_'
+            # else:
+            #     base_folder_name = f'models/ls{target_ls}'+add_str+'/PINN_ext_model_'
+            if target_ls != None:
+                add_str += f'ls{target_ls}'
             else:
-                base_folder_name = f'models/ls{target_ls}'+add_str+'/PINN_ext_model_'
+                add_str += 'all_year'
+
+            dynamic_pressure_condition = config.training_config['dynamic_pressure_condition'] 
+            if dynamic_pressure_condition == 'low':
+                add_str += '_low_dynP'
+            elif dynamic_pressure_condition == 'high':
+                add_str += '_high_dynP'
+
+            base_folder_name = f'models/'+add_str+'/PINN_ext_model_'
+            
             # Keep creating new folders with incremented names until one with a unique name is found
             while True:
                 folder_name = base_folder_name+str(counter)
@@ -119,6 +132,13 @@ def run_ensemble_training():
 
 
             condition = (input_sph[:,0] <= alt_max) & torch.all((target <= lim) & (target >= -lim), dim=1)
+            
+            # # check
+            # # lim = 60
+            # condition = (input_sph[:,0] <= alt_max) & torch.all((target <= lim) & (target >= -lim), dim=1)
+            # print(f'Number of points after cropping outliers: {torch.sum(condition).item()} / {target.shape[0]} ({100*torch.sum(condition).item()/target.shape[0]:.2f} %)')
+            # # check end
+            # assert 1 == 0, "checking condition"
 
             # seasonal constraint----------------------------------------------------------------------
             # 2026/05/01 update, only consider Ls values from now on, no "seasons":
@@ -173,7 +193,17 @@ def run_ensemble_training():
                 condition = condition & condition3
             # -----------------------------------------------------------------------------------------
 
-
+            # dynamic pressure condition --------------------------------------------------------------
+            if (dynamic_pressure_condition == 'low') | (dynamic_pressure_condition == 'high'):
+                dyn_p_tensor = torch.load('data/sw_dyn_p.pt')
+                condition_nonan = (1-np.isnan(dyn_p_tensor))
+                if dynamic_pressure_condition == 'low':
+                    condition4 = condition_nonan & (torch.log(dyn_p_tensor ) <= torch.median(torch.log(dyn_p_tensor[condition_nonan])))
+                else:
+                    condition4 = condition_nonan & (torch.log(dyn_p_tensor ) > torch.median(torch.log(dyn_p_tensor[condition_nonan])))
+                condition = condition & condition4
+            # -----------------------------------------------------------------------------------------
+            
             target = target[condition]
 
             if include_alt == True:

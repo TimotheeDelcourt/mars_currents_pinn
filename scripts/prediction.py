@@ -48,49 +48,57 @@ def generate_input_profiles():
     return df, input_tensor
 
 def generate_input_data(season = config.prediction_config['season']):
-    
-    if season == 'summer':
-        target_ls = 90
-    elif season == 'winter':
-        target_ls = 270
-    elif season == 'spring':
-        target_ls = 0
-    elif season  == 'autumn':
-        target_ls = 180
-    elif season == 'summer_autumn':
-        target_ls = 135
-    elif season == 'autumn_winter':
-        target_ls = 225
-    elif season == 'winter_spring':
-        target_ls = 315
-    elif season == 'spring_summer':
-        target_ls = 45
-    else:
-        raise ValueError('season_filter must be "summer", "winter", "spring", "autumn" or None')
-    angle_half_band = 30
     ls = torch.load('data/Ls_series.pt')
-    lower_bound = target_ls - angle_half_band
-    upper_bound = target_ls + angle_half_band
-    lower_bound = lower_bound % 360
-    upper_bound = upper_bound % 360
-    if lower_bound > upper_bound:
-        condition1 = (ls >= lower_bound) | (ls <= upper_bound)
+    if season != 'all_year':
+        if season == 'summer':
+            target_ls = 90
+        elif season == 'winter':
+            target_ls = 270
+        elif season == 'spring':
+            target_ls = 0
+        elif season  == 'autumn':
+            target_ls = 180
+        elif season == 'summer_autumn':
+            target_ls = 135
+        elif season == 'autumn_winter':
+            target_ls = 225
+        elif season == 'winter_spring':
+            target_ls = 315
+        elif season == 'spring_summer':
+            target_ls = 45
+        else:
+            raise ValueError('season_filter must be "summer", "winter", "spring", "autumn" or None')
+        angle_half_band = 30
+        
+        lower_bound = target_ls - angle_half_band
+        upper_bound = target_ls + angle_half_band
+        lower_bound = lower_bound % 360
+        upper_bound = upper_bound % 360
+        if lower_bound > upper_bound:
+            condition1 = (ls >= lower_bound) | (ls <= upper_bound)
+        else:
+            condition1 = (ls <= upper_bound) & (ls >= lower_bound)
     else:
-        condition1 = (ls <= upper_bound) & (ls >= lower_bound)
+        condition1 = torch.ones_like(ls, dtype=torch.bool)
 
     input_sph = torch.load('data/position_mso_spherical.pt')
     condition2 = (input_sph[:,0] <= config.prediction_config['alt_max_data'])
     del input_sph
     condition = condition1 & condition2
     input_xyz = torch.load('data/position_mso.pt')[condition]
+    # print(condition)
+    # print(input_xyz)
+    # if season != 'all_year':
     df = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['alt', 'lat', 'lon'])[condition.numpy()]
-    # print(input_xyz.shape)
-    # print(df.shape)
+    df['idx'] = df.index
+    # else:
     # print(df)
+    
     return df, input_xyz
  
-def choose_input_type(season=None):
-    input_type_str = config.prediction_config['input_type']
+def choose_input_type(input_type_str = config.prediction_config['input_type'],season=None):
+    print(input_type_str)
+    print(season)
     if input_type_str == 'fibonacci':
         df, input_tensor = generate_input_fibonacci()
     elif input_type_str == 'profile':
@@ -102,7 +110,7 @@ def choose_input_type(season=None):
         return
     return df, input_tensor, input_type_str
 
-def predict(input, k , minibatch=config.prediction_config['minibatch'],verbose=True,season=None):
+def predict(input, k , models_dir, minibatch=config.prediction_config['minibatch'],verbose=True,season=None):
     '''
     Input must be a torch tensor of shape (n,4) with columns: X,Y,Z [km], alt [km]
     k: int, number of the bootstrap model to use.
@@ -110,10 +118,6 @@ def predict(input, k , minibatch=config.prediction_config['minibatch'],verbose=T
     device = GPU if minibatch = 0, else CPU.
     '''
     # Load model -----------------------------------------------
-    if (config.prediction_config['input_type'] == 'data'):
-        models_dir = season+'/PINN_ext_model_'
-    else:
-        models_dir = config.prediction_config['models_dir']
 
     folder_name = 'models/'+models_dir+str(k)
     # folder_name = f'models/2500km/PINN_ext_all_data_model_'+str(k)
@@ -208,7 +212,7 @@ def predict(input, k , minibatch=config.prediction_config['minibatch'],verbose=T
 
 def predict_ensemble(season=None):
 
-    df, input_tensor, input_type_str = choose_input_type(season)
+    df, input_tensor, input_type_str = choose_input_type(season=season)
 
     df['x'] = input_tensor[:,0]
     df['y'] = input_tensor[:,1]
@@ -216,6 +220,11 @@ def predict_ensemble(season=None):
 
     k_start = config.prediction_config['models_start_stop'][0]
     k_stop  = config.prediction_config['models_start_stop'][1]
+
+    if (config.prediction_config['input_type'] == 'data'):
+        models_dir = season+'/PINN_ext_model_'
+    else:
+        models_dir = config.prediction_config['models_dir']
 
     B_sum = None
     # B_sum_sq = None
@@ -227,7 +236,7 @@ def predict_ensemble(season=None):
     for i, model in enumerate(models):
     # for i, model in enumerate(range(k_start, k_stop+1)):
         try:
-            B, J = predict(input_tensor, model,verbose=False,season=season)
+            B, J = predict(input_tensor, model,models_dir,verbose=False,season=season)
             if B_sum is None:
                 B_sum = B.clone()
                 # B_sum_sq = B.pow(2)
@@ -266,14 +275,14 @@ def predict_ensemble(season=None):
     # df['Jy_std'] = J_std[:,1]
     # df['Jz_std'] = J_std[:,2]
 
-    Br, Bt, Bp = utils.field_cart_to_spher(B_mean[:,0], B_mean[:,1], B_mean[:,2],
+    Br, Bt, Bp = utils.field_cart_to_spher_torch(B_mean[:,0], B_mean[:,1], B_mean[:,2],
                                         lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
     df['Br'] = Br
     df['Bt'] = Bt
     df['Bp'] = Bp
     del Br, Bt, Bp
     
-    Jr, Jt, Jp = utils.field_cart_to_spher(J_mean[:,0], J_mean[:,1], J_mean[:,2],
+    Jr, Jt, Jp = utils.field_cart_to_spher_torch(J_mean[:,0], J_mean[:,1], J_mean[:,2],
                                         lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
     df['Jr'] = Jr
     df['Jt'] = Jt
@@ -307,7 +316,71 @@ def predict_ensemble(season=None):
         df.to_csv(f"predictions/data/PINN_MSO_ensemble_models_{k_start}to{n_models}_{season}_data_{alt_max}km.csv", index=False)
     # print(df)
 
+def predict_time_lapse():
 
+    ls_list = config.prediction_config['ls_list']
+
+    for ls in ls_list:
+        print(f'Computing predictions of ls {ls} model')
+        models_dir = f'time_lapse/ls{ls}/PINN_ext_model_'
+
+        df, input_tensor, _ = choose_input_type(input_type_str='fibonacci')
+
+        df['x'] = input_tensor[:,0]
+        df['y'] = input_tensor[:,1]
+        df['z'] = input_tensor[:,2]
+
+        k_start = config.prediction_config['models_start_stop'][0]
+        k_stop  = config.prediction_config['models_start_stop'][1]
+
+        B_sum = None
+        J_sum = None  
+        n_models = 0
+        from tqdm import tqdm
+        models = tqdm(range(k_start, k_stop+1))
+        for i, model in enumerate(models):
+            try:
+                B, J = predict(input_tensor, model,models_dir,verbose=False)
+                if B_sum is None:
+                    B_sum = B.clone()
+                    J_sum = J.clone()
+                else:
+                    B_sum += B
+                    J_sum += J
+                n_models += 1
+                models.set_postfix_str(f'Model {model} successfully computed')
+            except:
+                models.set_postfix_str(f'Model {model} failed')
+                continue
+            
+        # Calculate statistics
+        B_mean = B_sum / n_models
+        J_mean = J_sum / n_models  
+
+        df['Bx'] = B_mean[:,0]
+        df['By'] = B_mean[:,1]
+        df['Bz'] = B_mean[:,2]
+        df['Jx'] = J_mean[:,0]
+        df['Jy'] = J_mean[:,1]
+        df['Jz'] = J_mean[:,2]
+
+        Br, Bt, Bp = utils.field_cart_to_spher_torch(B_mean[:,0], B_mean[:,1], B_mean[:,2],
+                                            lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
+        df['Br'] = Br
+        df['Bt'] = Bt
+        df['Bp'] = Bp
+        del Br, Bt, Bp
+        
+        Jr, Jt, Jp = utils.field_cart_to_spher_torch(J_mean[:,0], J_mean[:,1], J_mean[:,2],
+                                            lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
+        df['Jr'] = Jr
+        df['Jt'] = Jt
+        df['Jp'] = Jp
+        del Jr, Jt, Jp
+
+        df.to_csv(f"predictions/PINN_MSO_150km_time_lapse/ls{ls}.csv", index=False)
+
+        
 def predict_single():
     df, input_tensor, input_type_str = choose_input_type()
 
@@ -318,9 +391,9 @@ def predict_single():
     # df['Jx'] = J[:,0].to('cpu').detach()
     # df['Jy'] = J[:,1].to('cpu').detach()
     # df['Jz'] = J[:,2].to('cpu').detach()
-    Br, Bt, Bp = utils.field_cart_to_spher(B[:,0], B[:,1], B[:,2],
+    Br, Bt, Bp = utils.field_cart_to_spher_torch(B[:,0], B[:,1], B[:,2],
                                         lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
-    Jr, Jt, Jp = utils.field_cart_to_spher(J[:,0], J[:,1], J[:,2],
+    Jr, Jt, Jp = utils.field_cart_to_spher_torch(J[:,0], J[:,1], J[:,2],
                                         lat_deg = df['lat'].values, lon_deg = df['lon'].values, device = device)
     df['Br'] = Br.to('cpu').detach()
     df['Bt'] = Bt.to('cpu').detach()
@@ -438,7 +511,7 @@ if __name__ == '__main__':
   
     if config.predict_ensemble:
         if (config.prediction_config['input_type'] == 'data'):
-            if isinstance(config.prediction_config['season'],int):
+            if not isinstance(config.prediction_config['season'],list):
                 seasons = [config.prediction_config['season']]
             else:
                 seasons = config.prediction_config['season']
@@ -453,5 +526,8 @@ if __name__ == '__main__':
 
     if config.predict_single_neuron:
         predict_first_neuron()
+
+    if config.predict_time_lapse:
+        predict_time_lapse()
 
 

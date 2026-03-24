@@ -15,7 +15,7 @@ training_config = {
     # 'activation': nn.GELU(),
     # 'activation': Swish(),
     'lossfn': nn.MSELoss(),
-    'ensemble_size': 15,
+    'ensemble_size': 30,
     'bootstrap_counter_start': 1,
     'validation':True,
     'learning_rate': 0.1,
@@ -33,7 +33,7 @@ training_config = {
 
     # randomly selected parameters
     # 'l1_lambdas':[0, 0, 1e-7,1e-6,5*1e-6],
-    'altitudes_max':[200,700],# can contain a single value, or start and stop values for random selection
+    'altitudes_max':[220,650],# can contain a single value, or start and stop values for random selection
     'nums_neurons_per_layer':[8,20],
     'crop_outlier':[30,40,50,60,70], # can be a list or contain a single value
 
@@ -49,5 +49,8 @@ training_config = {
     # curstal field condition
     'curstal_field_condition':None, # low field, high field regions, or none (=all)
     'crustal_field_limit':10, # nT
+
+    # dynamic pressure condition
+    'dynamic_pressure_condition':'low', # 'low' dynamic pressure, 'high' dynamic pressure, or none
 }
 
