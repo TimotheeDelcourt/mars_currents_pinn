@@ -1,0 +1,434 @@
+Making folder
+Training model 1...
+Loading data
+Altitude max: 841 km
+Number of neurons per layer: 14
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 40 nT
+Input shape:  torch.Size([43025445, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999906085649887
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 3...
+Loading data
+Altitude max: 514 km
+Number of neurons per layer: 14
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 30 nT
+Input shape:  torch.Size([26220162, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999811516350957
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 5...
+Loading data
+Altitude max: 1221 km
+Number of neurons per layer: 10
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 100 nT
+Input shape:  torch.Size([60324143, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.7
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 6...
+Loading data
+Altitude max: 1350 km
+Number of neurons per layer: 14
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 100 nT
+Input shape:  torch.Size([65046927, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.7
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 9...
+Loading data
+Altitude max: 268 km
+Number of neurons per layer: 11
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 30 nT
+Input shape:  torch.Size([12886216, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999810084512392
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 10...
+Loading data
+Altitude max: 1111 km
+Number of neurons per layer: 16
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 50 nT
+Input shape:  torch.Size([54941282, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999859148316823
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 12...
+Loading data
+Altitude max: 715 km
+Number of neurons per layer: 13
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 50 nT
+Input shape:  torch.Size([39304969, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999671222582312
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 14...
+Loading data
+Altitude max: 907 km
+Number of neurons per layer: 8
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 40 nT
+Input shape:  torch.Size([45628404, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999906085649887
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 16...
+Loading data
+Altitude max: 1198 km
+Number of neurons per layer: 11
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 100 nT
+Input shape:  torch.Size([59475068, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.7
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 18...
+Loading data
+Altitude max: 451 km
+Number of neurons per layer: 12
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 60 nT
+Input shape:  torch.Size([27464731, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.7
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 19...
+Loading data
+Altitude max: 706 km
+Number of neurons per layer: 11
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 50 nT
+Input shape:  torch.Size([38920886, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.7
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 21...
+Loading data
+Altitude max: 242 km
+Number of neurons per layer: 14
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 50 nT
+Input shape:  torch.Size([12492122, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999811782420478
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 22...
+Loading data
+Altitude max: 1148 km
+Number of neurons per layer: 13
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 60 nT
+Input shape:  torch.Size([57005721, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999859148316823
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 24...
+Loading data
+Altitude max: 1210 km
+Number of neurons per layer: 8
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 50 nT
+Input shape:  torch.Size([58618533, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.7
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 26...
+Loading data
+Altitude max: 1438 km
+Number of neurons per layer: 12
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 30 nT
+Input shape:  torch.Size([61492060, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999718283406893
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 30...
+Loading data
+Altitude max: 856 km
+Number of neurons per layer: 8
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 60 nT
+Input shape:  torch.Size([45779737, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999577405268348
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 31...
+Loading data
+Altitude max: 1139 km
+Number of neurons per layer: 15
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 40 nT
+Input shape:  torch.Size([54439224, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999718283406893
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 33...
+Loading data
+Altitude max: 530 km
+Number of neurons per layer: 14
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 60 nT
+Input shape:  torch.Size([31528625, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999812136013526
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 35...
+Loading data
+Altitude max: 804 km
+Number of neurons per layer: 8
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 50 nT
+Input shape:  torch.Size([43010863, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.699976520309932
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 37...
+Loading data
+Altitude max: 995 km
+Number of neurons per layer: 11
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 40 nT
+Input shape:  torch.Size([49023049, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999906085649887
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 38...
+Loading data
+Altitude max: 1307 km
+Number of neurons per layer: 13
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 60 nT
+Input shape:  torch.Size([62863409, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.7
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 40...
+Loading data
+Altitude max: 374 km
+Number of neurons per layer: 13
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 40 nT
+Input shape:  torch.Size([21509862, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999811782420478
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 41...
+Loading data
+Altitude max: 1297 km
+Number of neurons per layer: 9
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 60 nT
+Input shape:  torch.Size([62498085, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.7
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 43...
+Loading data
+Altitude max: 695 km
+Number of neurons per layer: 10
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 100 nT
+Input shape:  torch.Size([39690009, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999812136013526
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 45...
+Loading data
+Altitude max: 1069 km
+Number of neurons per layer: 14
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 30 nT
+Input shape:  torch.Size([48116255, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.7
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 47...
+Loading data
+Altitude max: 306 km
+Number of neurons per layer: 9
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 60 nT
+Input shape:  torch.Size([18433566, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.7
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 49...
+Loading data
+Altitude max: 893 km
+Number of neurons per layer: 15
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 100 nT
+Input shape:  torch.Size([47860323, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999577405268348
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 50...
+Loading data
+Altitude max: 1488 km
+Number of neurons per layer: 13
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 50 nT
+Input shape:  torch.Size([68743449, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.6999671376930661
+Bootstrap prepared!
+Plateau reached!
+
+Making folder
+Training model 51...
+Loading data
+Altitude max: 371 km
+Number of neurons per layer: 7
+Include altitude: False
+Smoothness lambda: 10000000000.0
+Crop limit: 50 nT
+Input shape:  torch.Size([22338700, 3])
+Device: cuda
+Preparing bootstrap without replacement.
+Sampled orbits / total orbits:  0.69998590159312
+Bootstrap prepared!
+slurmstepd: error: *** JOB 46524527 ON eu-g3-068 CANCELLED AT 2025-10-29T15:13:27 ***
