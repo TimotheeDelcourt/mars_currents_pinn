@@ -10,6 +10,7 @@ import warnings
 from curl_function import curl_differentiable
 import importlib.util
 import json
+import tqdm
 warnings.filterwarnings("ignore")
 
 if torch.cuda.is_available():
@@ -81,20 +82,45 @@ def generate_input_data(season = config.prediction_config['season']):
     else:
         condition1 = torch.ones_like(ls, dtype=torch.bool)
 
+    if config.prediction_config['dynP'] == True:
+        dyn_p_tensor = torch.load('data/sw_dyn_p.pt')
+        condition_nonan = (1-np.isnan(dyn_p_tensor))
+        if config.prediction_config['models_dir'] == 'all_year_low_dynP/PINN_ext_model_':
+            condition3 = condition_nonan & (torch.log(dyn_p_tensor ) <= torch.median(torch.log(dyn_p_tensor[condition_nonan])))
+        elif config.prediction_config['models_dir'] == 'all_year_high_dynP/PINN_ext_model_':
+            condition3 = condition_nonan & (torch.log(dyn_p_tensor ) >  torch.median(torch.log(dyn_p_tensor[condition_nonan])))
+        else:
+            print('Dynamic pressure unspecified, no filtering.')
+            condition3 = torch.ones_like(ls, dtype=torch.bool)
+    else:
+        condition3 = torch.ones_like(ls, dtype=torch.bool)
+
     input_sph = torch.load('data/position_mso_spherical.pt')
     condition2 = (input_sph[:,0] <= config.prediction_config['alt_max_data'])
     del input_sph
-    condition = condition1 & condition2
+    condition = condition1 & condition2 & condition3
     input_xyz = torch.load('data/position_mso.pt')[condition]
-    # print(condition)
+    print(input_xyz.shape)
     # print(input_xyz)
     # if season != 'all_year':
-    df = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['alt', 'lat', 'lon'])[condition.numpy()]
+    df = pd.read_parquet('data/MAVEN_MSO_data.parquet', columns=['alt', 'lat', 'lon'])[condition.numpy().astype(bool)]
     df['idx'] = df.index
     # else:
     # print(df)
     
     return df, input_xyz
+
+def generate_input_alt_profile():
+    alt = torch.tensor(range(111, 651))
+    x = alt + 3393.5
+    y = torch.zeros_like(x)
+    z = torch.zeros_like(x)
+    input_tensor = torch.stack((x,y,z,alt), dim=1)
+
+    lat_deg = torch.zeros_like(alt)
+    lon_deg = torch.zeros_like(alt)
+    df = pd.DataFrame({'alt':alt.numpy(), 'lat':lat_deg.numpy(), 'lon':lon_deg.numpy()})
+    return df, input_tensor
  
 def choose_input_type(input_type_str = config.prediction_config['input_type'],season=None):
     print(input_type_str)
@@ -105,6 +131,8 @@ def choose_input_type(input_type_str = config.prediction_config['input_type'],se
         df, input_tensor = generate_input_profiles()
     elif input_type_str == 'data':
         df, input_tensor = generate_input_data(season)
+    elif input_type_str == 'alt_profile':
+        df, input_tensor = generate_input_alt_profile()
     else:
         print('Please select a valid input type in config_prediction.py')
         return
@@ -139,7 +167,11 @@ def predict(input, k , models_dir, minibatch=config.prediction_config['minibatch
     NeuralNet = neuralnets_module.NeuralNet_indep
     if verbose:
         print('Imported neuralnets from', folder_name)
-    spec_config = importlib.util.spec_from_file_location("config_training", folder_name+"/config_training.py")
+    config_training_path = folder_name+"/config_training"
+    if models_dir == 'all_year_high_dynP/PINN_ext_model_':
+        config_training_path += '2'
+    config_training_path += ".py"
+    spec_config = importlib.util.spec_from_file_location("config_training", config_training_path)
     config_training_module = importlib.util.module_from_spec(spec_config)
     spec_config.loader.exec_module(config_training_module)
     training_config = config_training_module.training_config
@@ -231,8 +263,8 @@ def predict_ensemble(season=None):
     J_sum = None  
     # J_sum_sq = None
     n_models = 0
-    from tqdm import tqdm
-    models = tqdm(range(k_start, k_stop+1))
+    
+    models = tqdm.tqdm(range(k_start, k_stop+1))
     for i, model in enumerate(models):
     # for i, model in enumerate(range(k_start, k_stop+1)):
         try:
@@ -313,7 +345,9 @@ def predict_ensemble(season=None):
         df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{n_models}_lon_{config.prediction_config['lon']}deg_profile{add_str}_{alt_max}km.csv", index=False)
     elif input_type_str == 'data':
         alt_max = config.prediction_config['alt_max_data']
-        df.to_csv(f"predictions/data/PINN_MSO_ensemble_models_{k_start}to{n_models}_{season}_data_{alt_max}km.csv", index=False)
+        df.to_csv(f"predictions/data/PINN_MSO_ensemble_models_{k_start}to{n_models}_{season}_data_{alt_max}km{add_str}.csv", index=False)
+    elif input_type_str == 'alt_profile':
+        df.to_csv(f"predictions/PINN_MSO_ensemble_models_{k_start}to{n_models}_alt_profile{add_str}.csv", index=False)
     # print(df)
 
 def predict_time_lapse():
@@ -500,14 +534,63 @@ def predict_first_neuron():
     if add_str != '':
         add_str = '_'+add_str
     df.to_csv(f"predictions/PINN_MSO_model{config.prediction_config['model_nb']}_{config.prediction_config['alt']}km_fibonacci{add_str}_neuronoutput.csv", index=False)
-            
+
     
 
 
 
 
-if __name__ == '__main__':
+def predict_submodels_single_point():
+    '''
+    Saves a csv with the prediction of each submodel (k = models_start_stop[0] ... [1])
+    at a single point: subsolar point at 150 km altitude (alt = 150 km, lat = 0, lon = 0).
+    Each row corresponds to a submodel k; columns are Br, Bt, Bp, Jr, Jt, Jp.
+    Uses the ensemble selected in config_prediction.py ('models_dir').
+    '''
+    alt = 150.0
+    lat = 0.0
+    lon = 0.0
+    r = 3393.5 + alt
+    colat = np.pi/2 - np.radians(lat)
+    lon_rad = np.radians(lon)
+    x = r * np.sin(colat) * np.cos(lon_rad)
+    y = r * np.sin(colat) * np.sin(lon_rad)
+    z = r * np.cos(colat)
+    input_tensor = torch.tensor([[x, y, z, alt]], dtype=torch.float32)
 
+    models_dir = config.prediction_config['models_dir']
+    k_start = config.prediction_config['models_start_stop'][0]
+    k_stop  = config.prediction_config['models_start_stop'][1]
+
+    ks = []
+    rows = []
+    models = tqdm.tqdm(range(k_start, k_stop+1))
+    for model in models:
+        try:
+            B, J = predict(input_tensor, model, models_dir, verbose=False)
+            Br, Bt, Bp = utils.field_cart_to_spher_torch(B[:,0], B[:,1], B[:,2],
+                                                lat_deg=lat, lon_deg=lon, device=device)
+            Jr, Jt, Jp = utils.field_cart_to_spher_torch(J[:,0], J[:,1], J[:,2],
+                                                lat_deg=lat, lon_deg=lon, device=device)
+            ks.append(model)
+            rows.append([Br.item(), Bt.item(), Bp.item(), Jr.item(), Jt.item(), Jp.item()])
+            models.set_postfix_str(f'Model {model} successfully computed')
+        except:
+            models.set_postfix_str(f'Model {model} failed')
+            continue
+
+    df = pd.DataFrame(rows, columns=['Br', 'Bt', 'Bp', 'Jr', 'Jt', 'Jp'], index=ks)
+    df.index.name = 'k'
+
+    add_str = config.prediction_config['add_str']
+    if add_str != '':
+        add_str = '_'+add_str
+    df.to_csv(f"predictions/PINN_MSO_submodels_{k_start}to{k_stop}_{int(alt)}km_subsolar_point{add_str}.csv")
+    print(df)
+
+
+if __name__ == '__main__':
+    dummy = 0
   
     if config.predict_ensemble:
         if (config.prediction_config['input_type'] == 'data'):
@@ -529,5 +612,10 @@ if __name__ == '__main__':
 
     if config.predict_time_lapse:
         predict_time_lapse()
+
+    if config.predict_submodels_point:
+        predict_submodels_single_point()
+
+
 
 

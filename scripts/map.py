@@ -52,7 +52,7 @@ def one_map(parameter, direction, filetype, data = None, save = 1):
             fill = np.sqrt(fill)
         except:
             fill = data[parameter].values
-        series = [0,20]
+        series = [0,15]
         # series = [np.log10(i) for i in series]
         cmap = 'imola'
         reverse_bool = False

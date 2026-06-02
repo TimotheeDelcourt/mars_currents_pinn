@@ -1,8 +1,19 @@
-# Ignore the data folder
 data/*
 scripts/batches/*.out
-#models/*
+models/*
 maps/*
 predictions/*
-# figures/*
+figures/*
 scripts/bin/*
+scripts/hello_world.py
+scripts/data_visualization.ipynb
+scripts/playground.ipynb
+scripts/playground_part2.ipynb
+scripts/playground_part3.ipynb
+scripts/profiles.ipynb
+scripts/residuals_vs_ls.ipynb
+scripts/rotateMSOpredictions.py
+scripts/rotational_averages.py
+scripts/SH_playgound.ipynb
+scripts/SH.py
+scripts/data_conversion.py
