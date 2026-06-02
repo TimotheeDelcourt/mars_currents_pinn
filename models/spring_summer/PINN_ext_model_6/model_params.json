@@ -1,1 +1,0 @@
-{"xyz_mean": 0, "xyz_std": 2082.62353515625, "alt_mean": null, "alt_std": null, "num_inputs": 3, "l1_lambda": 0, "num_neurons_per_layer": 13, "alt_max": 354, "crop_limit": 70, "smoothness_lambda": 10000000000.0, "include_alt": false}
