@@ -59,7 +59,8 @@ def run_ensemble_training():
         # Load and sample datasets ----------------------------------
         print('Loading data')
         input_xyz = torch.load('data/position_pc_xyz.pt')
-        input_sph = torch.load('data/position_pc_spherical.pt')
+        # input_sph = torch.load('data/position_pc_spherical.pt')
+        input_sph = torch.load('data/position_mso_spherical.pt')
         alt = input_sph[:,0]
         
         crustal_field_mbf = torch.load('data/crustal_field_pc_xyz.pt')
