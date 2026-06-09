@@ -64,7 +64,7 @@ def run_ensemble_training():
         alt = input_sph[:,0]
         
         crustal_field_mbf = torch.load('data/crustal_field_pc_xyz.pt')
-        observation_mbf = torch.load('data/observation_pc.pt')
+        observation_mbf = torch.load('data/observation_pc_xyz.pt')
         target = observation_mbf - crustal_field_mbf
 
         if config.training_config['random_parameters'] == False:
